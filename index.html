@@ -105,9 +105,16 @@ var data=[];
 
 async function fetchOne(mkt,code){
   var u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2';
-  var r=await fetch(u,{headers:{'Referer':'https://quote.eastmoney.com/'}});
-  var j=await r.json();
-  return j.data||{};
+  try{
+    var r=await fetch(u);
+    if(r.ok)return(await r.json()).data||{};
+  }catch(e){}
+  try{
+    var proxy='https://api.allorigins.win/raw?url='+encodeURIComponent(u);
+    var r2=await fetch(proxy);
+    var j=await r2.json();
+    return j.contents?JSON.parse(j.contents).data||{}:{};
+  }catch(e){return{}}
 }
 
 async function load(){
