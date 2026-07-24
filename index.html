@@ -113,8 +113,7 @@ var data=[];
 
 async function fetchOne(mkt,code){
   var u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2';
-  var ps=['https://corsproxy.io/?'+u,u];
-  for(var i=0;i<ps.length;i++){try{var r=await fetch(ps[i]);if(!r.ok)continue;var j=await r.json();if(j&&j.data)return j.data}catch(e){}}
+  try{var r=await fetch(u);if(r.ok){var j=await r.json();if(j&&j.data)return j.data}}catch(e){}
   return{};
 }
 
@@ -235,6 +234,7 @@ function onShareChange(code,val){shares[code]=parseInt(val)||0;try{localStorage.
 function switchTab(btn,id){document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');['dash','detail','divcenter','opp'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});var e=document.getElementById(id);if(e)e.classList.remove('hidden')}
 
 load();
+setInterval(load,60000);
 </script>
 </body>
 </html>
