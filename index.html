@@ -13,7 +13,6 @@ header h1{font-size:20px;font-weight:800}header .time{font-size:11px;color:var(-
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .stat{background:var(--card);border-radius:10px;padding:12px;text-align:center;box-shadow:var(--shadow)}
 .stat .l{font-size:11px;color:var(--sub)}.stat .v{font-size:20px;font-weight:700;margin-top:4px}
-.pnl-up{color:var(--red)}.pnl-down{color:var(--green)}
 .card{background:var(--card);border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--border)}
 .card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .card .name{font-size:16px;font-weight:700}.card .code{font-size:11px;color:var(--sub)}
@@ -27,7 +26,6 @@ header h1{font-size:20px;font-weight:800}header .time{font-size:11px;color:var(-
 .chg-up{background:var(--red)}.chg-down{background:var(--green)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;margin-top:8px;font-size:12px;color:var(--sub)}
 .grid2 b{color:var(--text);font-weight:600}
-.pos{font-size:11px;color:var(--sub);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 .section{margin-top:16px}.section h2{font-size:15px;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--border)}
 .tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--card);border-radius:8px;padding:3px;box-shadow:var(--shadow)}
 .tabs button{flex:1;padding:9px 4px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:none;color:var(--sub);transition:.15s}
@@ -46,85 +44,75 @@ footer{text-align:center;padding:12px;font-size:10px;color:var(--sub)}
 </style>
 </head>
 <body>
-<header><h1>📊 我的收息监控</h1><div class="time" id="time">点击下方按钮加载数据</div></header>
+<header><h1>📊 收息监控面板</h1><div class="time" id="time">点击下方按钮加载数据</div></header>
 <div class="stats" id="stats"><div class="loading">⏳</div></div>
 <div class="tabs">
   <button class="on" onclick="switchTab(this,'cards')">📋 概览</button>
   <button onclick="switchTab(this,'opp')">🎯 机会</button>
   <button onclick="switchTab(this,'div')">📅 分红</button>
-  <button onclick="switchTab(this,'pos')">💼 仓位</button>
 </div>
 <button class="btn-refresh" onclick="load()">🔄 刷新数据</button>
 <div id="cards"></div>
 <div id="opp" class="section hidden"></div>
 <div id="div" class="section hidden"></div>
-<div id="pos" class="section hidden"></div>
 <footer>东方财富API · 点击刷新 · GitHub Pages</footer>
 
 <script>
-// ═══ 配置 ═══
-const CFG=[
-  {name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,role:'周期弹性',tag:'tag-c',sh:1000,cost:50.88},
-  {name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,role:'稳定底仓',tag:'tag-s',sh:700,cost:36.41},
-  {name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,role:'高股息',tag:'tag-d',sh:500,cost:39.38},
-  {name:'中国移动',code:'600941',mkt:1,div:4.70,buy:88,role:'波动缓冲',tag:'tag-b',sh:0,cost:0},
+var CFG=[
+  {name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,role:'周期弹性',tag:'tag-c',sh:1000},
+  {name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,role:'稳定底仓',tag:'tag-s',sh:700},
+  {name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,role:'高股息',tag:'tag-d',sh:500},
+  {name:'中国移动',code:'600941',mkt:1,div:4.70,buy:88,role:'波动缓冲',tag:'tag-b',sh:0},
 ];
-const DIV_CAL=[
-  {s:'格力电器',t:'年报',d:'2026-08',p10:20,hot:true},
-  {s:'中国移动',t:'年报',d:'2026-09',p10:22},
-  {s:'中国平安',t:'中报',d:'2026-10',p10:9.5},
-  {s:'招商银行',t:'中报',d:'2027-01',p10:10},
-];
+var DIV_CAL=[{s:'格力电器',t:'年报',d:'2026-08',p10:20,hot:true},{s:'中国移动',t:'年报',d:'2026-09',p10:22},{s:'中国平安',t:'中报',d:'2026-10',p10:9.5},{s:'招商银行',t:'中报',d:'2027-01',p10:10}];
 
-// ═══ 数据获取 ═══
 async function fetchOne(mkt,code){
-  const u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2';
-  const r=await fetch(u,{headers:{'Referer':'https://quote.eastmoney.com/'}});
-  const j=await r.json();
+  var u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2';
+  var r=await fetch(u,{headers:{'Referer':'https://quote.eastmoney.com/'}});
+  var j=await r.json();
   return j.data||{};
 }
 
 async function load(){
   document.getElementById('time').textContent='加载中...';
-  const d=[];
-  for(const c of CFG){
+  var d=[];
+  for(var i=0;i<CFG.length;i++){
+    var c=CFG[i];
     try{
-      const raw=await fetchOne(c.mkt,c.code);
-      const p=raw.f43||0,pc=raw.f60||0;
+      var raw=await fetchOne(c.mkt,c.code);
+      var p=raw.f43||0,pc=raw.f60||0;
       d.push({
-        ...c,price:p,prev:pc,
+        name:c.name,code:c.code,role:c.role,tag:c.tag,sh:c.sh,div:c.div,buy:c.buy,
+        price:p,prev:pc,
         chg:pc>0?((p-pc)/pc*100):0,
         hi:raw.f44||0,lo:raw.f45||0,op:raw.f46||0,
         pe:raw.f162||0,pb:raw.f167||0,
         mcap:(raw.f116||0)/1e8,
         divR:p>0?(c.div/p*100):0,
         dist:c.buy>0?((p-c.buy)/c.buy*100):0,
-        mv:c.sh*p,pnl:c.sh*(p-c.cost),
-        ann:c.sh*c.div,
+        ann:Math.round(c.sh*c.div),
       });
-    }catch(e){d.push({...c,err:true})}
+    }catch(e){d.push({name:c.name,code:c.code,err:true})}
   }
   render(d);
   document.getElementById('time').textContent='🟢 '+(new Date()).toLocaleString('zh-CN');
 }
 
-// ═══ 渲染 ═══
 function render(d){
-  const tv=d.reduce((a,r)=>a+(r.mv||0),0);
-  const tp=d.reduce((a,r)=>a+(r.pnl||0),0);
-  const ad=d.reduce((a,r)=>a+(r.ann||0),0);
+  var ad=0,ts=0;
+  for(var i=0;i<d.length;i++){ad+=d[i].ann||0;ts+=d[i].sh||0}
   document.getElementById('stats').innerHTML=
-    '<div class="stat"><div class="l">持仓市值</div><div class="v">¥'+(tv/10000).toFixed(1)+'万</div></div>'+
-    '<div class="stat"><div class="l">浮动盈亏</div><div class="v '+(tp>=0?'pnl-up':'pnl-down')+'">'+(tp>=0?'+':'')+'¥'+tp.toLocaleString('zh-CN',{maximumFractionDigits:0})+'</div></div>'+
     '<div class="stat"><div class="l">年分红预估</div><div class="v">¥'+ad.toLocaleString()+'</div></div>'+
     '<div class="stat"><div class="l">月均现金流</div><div class="v">¥'+(ad/12).toFixed(0)+'</div></div>';
 
-  document.getElementById('cards').innerHTML=d.map(r=>{
-    if(r.err)return '<div class="card"><div class="name">'+r.name+'</div>接口异常</div>';
-    const up=r.chg>0,dc=r.dist<=5?'#27ae60':'#e67e22';
-    return '<div class="card" style="border-left-color:'+(r.name==='招商银行'?'#27ae60':r.name==='格力电器'?'#e67e22':r.name==='中国平安'?'#2980b9':'#8e44ad')+'">'+
-      '<div class="card-top"><div><div class="name">'+r.name+'<span class="code"> '+r.code+'</span></div><span class="tag '+r.tag+'">'+r.role+'</span></div>'+
-      (r.buy?'<div class="target"><div class="tl">补仓≤¥'+r.buy+'</div><div class="tv" style="color:'+dc+'">'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</div></div>':'')+'</div>'+
+  document.getElementById('cards').innerHTML=d.map(function(r){
+    if(r.err)return'<div class="card"><div class="name">'+r.name+'</div>接口异常</div>';
+    var up=r.chg>0,dc=r.dist<=5?'#27ae60':'#e67e22';
+    return'<div class="card" style="border-left-color:'+(r.name==='招商银行'?'#27ae60':r.name==='格力电器'?'#e67e22':r.name==='中国平安'?'#2980b9':'#8e44ad')+'">'+
+      '<div class="card-top">'+
+        '<div><div class="name">'+r.name+'<span class="code"> '+r.code+'</span></div><span class="tag '+r.tag+'">'+r.role+'</span></div>'+
+        (r.buy?'<div class="target"><div class="tl">补仓≤¥'+r.buy+'</div><div class="tv" style="color:'+dc+'">'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</div></div>':'')+
+      '</div>'+
       '<div class="price-line"><span class="price">'+r.price.toFixed(2)+'</span><span class="chg '+(up?'chg-up':'chg-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span></div>'+
       '<div class="grid2">'+
         '<div>PE <b>'+r.pe.toFixed(1)+'</b></div><div>PB <b>'+r.pb.toFixed(2)+'</b></div>'+
@@ -132,38 +120,30 @@ function render(d){
         '<div>最高 <b style="color:#e74c3c">'+r.hi.toFixed(2)+'</b></div><div>最低 <b style="color:#27ae60">'+r.lo.toFixed(2)+'</b></div>'+
         '<div>昨收 <b>'+r.prev.toFixed(2)+'</b></div><div>今开 <b>'+r.op.toFixed(2)+'</b></div>'+
       '</div>'+
-      (r.sh>0?'<div class="pos">持仓 '+r.sh+' 股 | 成本 ¥'+r.cost+' | 浮盈 <span class="'+(r.pnl>=0?'pnl-up':'pnl-down')+'">¥'+r.pnl.toFixed(0)+'</span> | 年分红 ¥'+r.ann+'</div>':'')+
-      '</div>';
+      (r.sh>0?'<div style="font-size:11px;color:var(--sub);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">'+r.sh+' 股 × ¥'+r.div+' ≈ 年分红 ¥'+r.ann+'</div>':'')+
+    '</div>';
   }).join('');
 
-  // 机会排行
   document.getElementById('opp').innerHTML='<h2>🎯 买入机会排行（距补仓价）</h2>'+
-    d.filter(r=>r.buy>0).sort((a,b)=>a.dist-b.dist).map((r,i)=>{
-      const w=Math.max(5,100-Math.abs(r.dist)*10),c=r.dist<=3?'bar-hot':r.dist<=7?'bar-warm':'bar-cool';
-      return '<div class="row"><span>'+(i+1)+'. <b>'+r.name+'</b></span><span class="r">¥'+r.price.toFixed(2)+' → ¥'+r.buy+'</span>'+
+    d.filter(function(r){return r.buy>0}).sort(function(a,b){return a.dist-b.dist}).map(function(r,i){
+      var w=Math.max(5,100-Math.abs(r.dist)*10),c=r.dist<=3?'bar-hot':r.dist<=7?'bar-warm':'bar-cool';
+      return'<div class="row"><span>'+(i+1)+'. <b>'+r.name+'</b></span><span class="r">¥'+r.price.toFixed(2)+' → ¥'+r.buy+'</span>'+
         '<span style="font-weight:700;color:'+(r.dist<=5?'#27ae60':'#e67e22')+'">'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</span>'+
         '<div class="bar"><div class="bar-fill '+c+'" style="width:'+w+'%"></div></div></div>';
     }).join('');
 
-  // 分红日历
   document.getElementById('div').innerHTML='<h2>📅 分红日历</h2>'+
-    DIV_CAL.map(e=>'<div class="row"><span><b>'+e.s+'</b>（'+e.t+'）</span><span class="r">'+e.d+'</span>'+
-      '<span>10派'+e.p10+'元</span>'+(e.hot?'<span class="badge-hot">本月</span>':'')+'</div>').join('');
-
-  // 仓位
-  document.getElementById('pos').innerHTML='<h2>💼 仓位管理</h2>'+
-    '<div class="row" style="font-weight:700;border-bottom:2px solid var(--border)"><span>股票</span><span>市值</span><span>浮盈</span><span>分红</span></div>'+
-    d.filter(r=>r.sh>0).map(r=>'<div class="row"><span><b>'+r.name+'</b></span><span>¥'+(r.mv||0).toFixed(0)+'</span>'+
-      '<span class="'+(r.pnl>=0?'pnl-up':'pnl-down')+'">'+(r.pnl>=0?'+':'')+'¥'+(r.pnl||0).toFixed(0)+'</span><span>¥'+(r.ann||0)+'</span></div>').join('')+
-    '<div class="row" style="font-weight:700;border-top:2px solid var(--border)"><span>合计</span><span>¥'+tv.toFixed(0)+'</span>'+
-      '<span class="'+(tp>=0?'pnl-up':'pnl-down')+'">'+(tp>=0?'+':'')+'¥'+tp.toFixed(0)+'</span><span>¥'+ad+'</span></div>';
+    DIV_CAL.map(function(e){
+      return'<div class="row"><span><b>'+e.s+'</b>（'+e.t+'）</span><span class="r">'+e.d+'</span>'+
+        '<span>10派'+e.p10+'元</span>'+(e.hot?'<span class="badge-hot">本月</span>':'')+'</div>';
+    }).join('');
 }
 
 function switchTab(btn,id){
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
   btn.classList.add('on');
-  document.querySelectorAll('#opp,#div,#pos,#cards').forEach(e=>e.classList.add('hidden'));
-  if(id==='cards') document.getElementById('cards').classList.remove('hidden');
+  document.querySelectorAll('#opp,#div,#cards').forEach(function(e){e.classList.add('hidden')});
+  if(id==='cards')document.getElementById('cards').classList.remove('hidden');
   else document.getElementById(id).classList.remove('hidden');
 }
 
