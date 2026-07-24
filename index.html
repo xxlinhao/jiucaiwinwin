@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的股票监控面板</title>
+<style>
+:root {
+  --bg: #f5f6f8;
+  --card: #fff;
+  --text: #1a1a2e;
+  --sub: #666;
+  --red: #e74c3c;
+  --green: #27ae60;
+  --blue: #2980b9;
+  --orange: #e67e22;
+  --purple: #8e44ad;
+  --teal: #16a085;
+  --border: #e8eaed;
+  --shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+.header { text-align: center; padding: 16px 0; }
+.header h1 { font-size: 22px; font-weight: 700; }
+.header .update { font-size: 12px; color: var(--sub); margin-top: 4px; }
+
+/* Top stats */
+.top-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat-card { background: var(--card); border-radius: 10px; padding: 14px 16px; box-shadow: var(--shadow); text-align: center; }
+.stat-card .label { font-size: 12px; color: var(--sub); }
+.stat-card .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+.stat-card .sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
+
+/* Tab navigation */
+.tabs { display: flex; gap: 2px; margin-bottom: 16px; background: var(--card); border-radius: 10px; padding: 4px; box-shadow: var(--shadow); }
+.tab { flex: 1; text-align: center; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--sub); transition: .2s; border: none; background: none; }
+.tab.active { background: var(--blue); color: #fff; }
+
+/* Stock grid */
+.stock-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stock-card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); border-left: 4px solid transparent; transition: .2s; }
+.stock-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.card-name { font-size: 17px; font-weight: 700; }
+.card-code { font-size: 11px; color: var(--sub); }
+.card-tag { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.tag-stable { background: #e8f5e9; color: #27ae60; }
+.tag-dividend { background: #fdebd0; color: #e67e22; }
+.tag-cycle { background: #eaf2f8; color: #2980b9; }
+.tag-buffer { background: #f4ecf7; color: #8e44ad; }
+.price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.big-price { font-size: 28px; font-weight: 800; }
+.change-badge { font-size: 14px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.change-up { color: #fff; background: var(--red); }
+.change-down { color: #fff; background: var(--green); }
+.change-flat { color: var(--sub); background: #eee; }
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; margin-top: 8px; }
+.metric { font-size: 12px; color: var(--sub); }
+.metric span { color: var(--text); font-weight: 600; }
+
+/* Section panels */
+.panel { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 16px; box-shadow: var(--shadow); }
+.panel h2 { font-size: 16px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+
+/* Opportunity ranking */
+.opp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.opp-table th { padding: 8px 6px; text-align: left; border-bottom: 2px solid var(--border); color: var(--sub); font-size: 11px; }
+.opp-table td { padding: 10px 6px; border-bottom: 1px solid var(--border); }
+.opp-bar { height: 6px; border-radius: 3px; background: #eee; max-width: 100px; }
+.opp-bar-fill { height: 100%; border-radius: 3px; transition: .3s; }
+.bar-hot { background: var(--red); }
+.bar-warm { background: var(--orange); }
+.bar-cool { background: var(--blue); }
+
+/* Dividend calendar */
+.div-list { display: grid; gap: 8px; }
+.div-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; background: #f8f9fa; }
+.div-date { font-size: 12px; color: var(--sub); min-width: 70px; }
+.div-stock { font-size: 14px; font-weight: 600; flex: 1; }
+.div-info { font-size: 12px; color: var(--sub); }
+.badge-soon { background: #ffeaea; color: var(--red); padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  body { padding: 10px; }
+  .stock-grid { grid-template-columns: 1fr; }
+  .top-stats { grid-template-columns: 1fr 1fr; }
+}
+.footer { text-align: center; padding: 16px; font-size: 11px; color: var(--sub); }
+.loading { text-align: center; padding: 40px; color: var(--sub); }
+.pnl-up { color: var(--red); }
+.pnl-down { color: var(--green); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📊 我的收息监控面板</h1>
+  <div class="update" id="updateTime">加载中...</div>
+</div>
+
+<div class="top-stats" id="topStats"></div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard')">📋 概览</button>
+  <button class="tab" onclick="switchTab('opportunity')">🎯 机会排行</button>
+  <button class="tab" onclick="switchTab('dividend')">📅 分红日历</button>
+  <button class="tab" onclick="switchTab('position')">💼 我的仓位</button>
+</div>
+
+<div id="dashboardView">
+  <div class="stock-grid" id="stockGrid"></div>
+</div>
+
+<div id="opportunityView" style="display:none"></div>
+<div id="dividendView" style="display:none"></div>
+<div id="positionView" style="display:none"></div>
+
+<div class="footer">数据来源：东方财富 | 自动刷新 / 60s | 仅供个人参考</div>
+
+<script>
+const COLORS = {
+  '稳定底仓': { tag: 'tag-stable', border: '#27ae60' },
+  '高股息': { tag: 'tag-dividend', border: '#e67e22' },
+  '周期弹性': { tag: 'tag-cycle', border: '#2980b9' },
+  '波动缓冲': { tag: 'tag-buffer', border: '#8e44ad' },
+};
+
+async function fetchData() {
+  try {
+    const r = await fetch('/api/stocks');
+    return await r.json();
+  } catch(e) {
+    return null;
+  }
+}
+
+function renderAll(data) {
+  if (!data) return;
+  const { stocks, totals, dividendCalendar } = data;
+  document.getElementById('updateTime').textContent = '🟢 实时 ' + new Date().toLocaleTimeString('zh-CN');
+
+  // Top stats
+  document.getElementById('topStats').innerHTML = `
+    <div class="stat-card"><div class="label">持仓市值</div><div class="value">¥${totals.marketValue.toLocaleString('zh-CN', {maximumFractionDigits:0})}</div></div>
+    <div class="stat-card"><div class="label">浮动盈亏</div><div class="value ${totals.totalPnL>=0?'pnl-up':'pnl-down'}">${totals.totalPnL>=0?'+':''}¥${totals.totalPnL.toLocaleString('zh-CN', {maximumFractionDigits:0})}</div></div>
+    <div class="stat-card"><div class="label">年分红预估</div><div class="value">¥${totals.annualDiv.toLocaleString('zh-CN', {maximumFractionDigits:0})}</div><div class="sub">月均 ¥${(totals.annualDiv/12).toFixed(0)}</div></div>
+    <div class="stat-card"><div class="label">目标年分红</div><div class="value">¥10,134</div><div class="sub">完成度 ${(totals.annualDiv/10134*100).toFixed(0)}%</div></div>
+  `;
+
+  // Stock grid
+  document.getElementById('stockGrid').innerHTML = stocks.map(s => {
+    const up = s.changePct > 0;
+    const flat = s.changePct === 0;
+    const color = COLORS[s.role] || {};
+    const price = s.price || 0;
+    const divRt = s.divRate || 0;
+    const dist = s.distanceToTarget || 0;
+    const distColor = dist <= 0 ? '#27ae60' : dist <= 5 ? '#e67e22' : '#e74c3c';
+    const hasTarget = s.target > 0;
+
+    return `
+    <div class="stock-card" style="border-left-color:${color.border||'#ccc'}">
+      <div class="card-header">
+        <div>
+          <div class="card-name">${s.name} <span class="card-code">${s.code}</span></div>
+          <span class="card-tag ${color.tag||''}">${s.role}</span>
+        </div>
+        ${hasTarget ? `<div style="text-align:right"><div style="font-size:10px;color:var(--sub)">目标 ¥${s.target}</div><div style="font-size:12px;font-weight:600;color:${distColor}">${dist>=0?'+':''}${dist.toFixed(1)}%</div></div>` : ''}
+      </div>
+      <div class="price-row">
+        <span class="big-price">${price.toFixed(2)}</span>
+        <span class="change-badge ${up?'change-up':flat?'change-flat':'change-down'}">${up?'+':''}${s.changePct.toFixed(2)}%</span>
+      </div>
+      <div class="metric-grid">
+        <div class="metric">PE(TTM) <span>${(s.pe||0).toFixed(1)}</span></div>
+        <div class="metric">PB <span>${(s.pb||0).toFixed(2)}</span></div>
+        <div class="metric">股息率 <span style="color:${divRt>=5?'#e67e22':divRt>=3?'#2980b9':'#666'};font-weight:700">${divRt.toFixed(2)}%</span></div>
+        <div class="metric">市值 <span>${s.marketCap>10000?(s.marketCap/10000).toFixed(0)+'万亿':(s.marketCap||0).toFixed(0)+'亿'}</span></div>
+        <div class="metric">今开 <span>${(s.open||0).toFixed(2)}</span></div>
+        <div class="metric">最高 <span style="color:#e74c3c">${(s.high||0).toFixed(2)}</span></div>
+        <div class="metric">昨收 <span>${(s.prevClose||0).toFixed(2)}</span></div>
+        <div class="metric">最低 <span style="color:#27ae60">${(s.low||0).toFixed(2)}</span></div>
+      </div>
+      ${s.position.shares > 0 ? `
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:12px;color:var(--sub)">
+        持仓 ${s.position.shares} 股 | 成本 ¥${s.position.cost} | 浮盈 <span class="${s.positionPnL>=0?'pnl-up':'pnl-down'}">¥${s.positionPnL.toFixed(0)}</span> | 年分红 ¥${s.annualDiv}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Opportunity view
+  document.getElementById('opportunityView').innerHTML = `
+    <div class="panel">
+      <h2>🎯 买入机会排行（距目标价最近）</h2>
+      <table class="opp-table">
+        <tr><th>排名</th><th>股票</th><th>现价</th><th>目标价</th><th>差距</th><th>股息率</th><th>PE</th><th>进度</th></tr>
+        ${stocks.filter(s=>s.target>0).sort((a,b)=>a.distanceToTarget-b.distanceToTarget).map((s,i)=>{
+          const d = s.distanceToTarget;
+          const color = d<=3?'bar-hot':d<=7?'bar-warm':'bar-cool';
+          const width = Math.max(5, 100 - Math.abs(d)*10);
+          return `<tr>
+            <td>${i+1}</td>
+            <td><strong>${s.name}</strong></td>
+            <td>¥${(s.price||0).toFixed(2)}</td>
+            <td>¥${s.target}</td>
+            <td style="color:${d<=5?'#27ae60':'#e67e22'};font-weight:700">${d>=0?'+':''}${d.toFixed(1)}%</td>
+            <td>${(s.divRate||0).toFixed(2)}%</td>
+            <td>${(s.pe||0).toFixed(1)}</td>
+            <td><div class="opp-bar"><div class="opp-bar-fill ${color}" style="width:${width}%"></div></div></td>
+          </tr>`;
+        }).join('')}
+      </table>
+    </div>`;
+
+  // Dividend view
+  document.getElementById('dividendView').innerHTML = `
+    <div class="panel">
+      <h2>📅 分红日历</h2>
+      <div class="div-list">
+        ${dividendCalendar.map(d => {
+          const isSoon = d.date.includes('2026-08');
+          return `
+          <div class="div-item">
+            <div class="div-date">📆 ${d.date}</div>
+            <div class="div-stock">${d.stock}（${d.type}）</div>
+            <div class="div-info">10派${d.per10}元</div>
+            ${isSoon ? '<span class="badge-soon">本月</span>' : ''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  // Position view
+  document.getElementById('positionView').innerHTML = `
+    <div class="panel">
+      <h2>💼 我的仓位</h2>
+      <table class="opp-table">
+        <tr><th>股票</th><th>持仓</th><th>成本</th><th>现价</th><th>市值</th><th>浮盈</th><th>年分红</th><th>占比</th></tr>
+        ${stocks.map(s => {
+          const pos = s.position;
+          return pos.shares > 0 ? `<tr>
+            <td><strong>${s.name}</strong></td>
+            <td>${pos.shares} 股</td>
+            <td>¥${pos.cost}</td>
+            <td>¥${(s.price||0).toFixed(2)}</td>
+            <td>¥${(s.positionValue||0).toFixed(0)}</td>
+            <td class="${s.positionPnL>=0?'pnl-up':'pnl-down'}">${s.positionPnL>=0?'+':''}¥${(s.positionPnL||0).toFixed(0)}</td>
+            <td>¥${s.annualDiv}</td>
+            <td>${totals.annualDiv>0?(s.annualDiv/totals.annualDiv*100).toFixed(0):0}%</td>
+          </tr>` : '';
+        }).join('')}
+        <tr style="font-weight:700;border-top:2px solid var(--border)">
+          <td>合计</td><td>${stocks.reduce((s,r)=>s+r.position.shares,0)} 股</td><td></td><td></td>
+          <td>¥${totals.marketValue.toFixed(0)}</td>
+          <td class="${totals.totalPnL>=0?'pnl-up':'pnl-down'}">${totals.totalPnL>=0?'+':''}¥${totals.totalPnL.toFixed(0)}</td>
+          <td>¥${totals.annualDiv}</td><td>100%</td>
+        </tr>
+      </table>
+    </div>`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  ['dashboardView','opportunityView','dividendView','positionView'].forEach(id => document.getElementById(id).style.display='none');
+  document.getElementById(name+'View').style.display='block';
+}
+
+async function refresh() {
+  const data = await fetchData();
+  renderAll(data);
+}
+
+refresh();
+setInterval(refresh, 60000);
+</script>
+</body>
+</html>
