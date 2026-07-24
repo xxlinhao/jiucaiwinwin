@@ -129,7 +129,7 @@ async function load(){
   data=[];
   for(var i=0;i<CFG.length;i++){
     var c=CFG[i];
-    if(!shares[c.code])shares[c.code]=100;
+    if(!shares[c.code])shares[c.code]=0;
     try{
       var raw=await fetchOne(c.mkt,c.code);
       var p=raw.f43||0,pc=raw.f60||0;
