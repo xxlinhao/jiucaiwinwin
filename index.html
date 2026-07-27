@@ -241,7 +241,10 @@ function renderAll(){
       var priceAtRate=r.div/(rateNodes[sk].rate/100);
       segHTML+='<div class="divseg-seg" style="left:'+leftPos.toFixed(1)+'%;width:'+w.toFixed(1)+'%;background:'+rateNodes[sk].color+'"><div class="divseg-rate" style="color:'+rateNodes[sk].color2+'">'+rateNodes[sk].rate.toFixed(1)+'%</div><div class="divseg-price">¥'+priceAtRate.toFixed(2)+'</div></div>';
     }
-    var curSeg=r.price<=pMin?0:(r.price>=pMax?rateNodes.length-1:Math.max(0,Math.min(rateNodes.length-1,Math.floor((rateNodes.length-(r.price-pMin)/(pMax-pMin)*rateNodes.length))));
+    var curSeg=0;
+    if(r.price<=pMin)curSeg=0;
+    else if(r.price>=pMax)curSeg=rateNodes.length-1;
+    else curSeg=Math.floor((r.price-pMin)/(pMax-pMin)*rateNodes.length);
     var curPct=(r.price-pMin)/(pMax-pMin)*100;
     curPct=Math.max(0,Math.min(100,curPct));
     // 营收/利润
