@@ -39,31 +39,44 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .tabs button{flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;background:var(--card);color:var(--sub)}
 .tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 
-/* ═══ 个股详情 ═══ */
-.detail-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
-.detail-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #f0f2f5}
-.detail-name{font-size:17px;font-weight:700}.detail-code{font-size:11px;color:var(--sub)}
-.detail-tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;margin-left:6px}
-.tg-s{background:#e8f5e9;color:#27ae60}.tg-d{background:#fff3e0;color:#e67e22}
-.tg-c{background:#e8f0fe;color:#2980b9}.tg-b{background:#f3e5f5;color:#8e44ad}
-.detail-price{font-size:28px;font-weight:800;margin-bottom:8px}
-.detail-chg{font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px}
-.dl-chg-up{background:#fde8e8;color:var(--red)}.dl-chg-down{background:#e8f5e9;color:var(--green)}
-.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:10px 0}
-.mgrid .m{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;border-bottom:1px solid #f0f2f5}
+/* ═══ 个股详情（折叠面板） ═══ */
+.acc-item{border-bottom:1px solid var(--border)}
+.acc-head{cursor:pointer;padding:14px 4px;display:flex;align-items:center;justify-content:space-between}
+.acc-head .name{font-size:15px;font-weight:700;flex:1}
+.acc-head .price{font-size:18px;font-weight:800;margin:0 10px}
+.acc-head .chg{font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;min-width:50px;text-align:center}
+.chg-up{background:#fde8e8;color:var(--red)}.chg-down{background:#e8f5e9;color:var(--green)}
+.acc-head .arrow{font-size:14px;color:var(--sub);transition:.3s;min-width:20px;text-align:right}
+.acc-head.open .arrow{transform:rotate(180deg)}
+.acc-body{display:none;padding:0 4px 16px}
+.acc-body.show{display:block}
+.dl-section{margin-bottom:10px}
+.dl-section h4{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #f0f2f5}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
+.mgrid .m{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid #f8f9fb}
 .m .k{color:var(--sub)}.m .kv{font-weight:600}
-.div-hint{font-size:10px;color:var(--sub);margin-top:4px}
-.div-full-bar{margin-top:6px;overflow:hidden;border-radius:3px}
-.div-full-bar .track{height:6px;background:#f0f2f5;border-radius:3px;position:relative}
-.div-full-bar .fill{height:100%;border-radius:3px;position:absolute;transition:.3s}
-.div-full-bar .pin{position:absolute;width:10px;height:10px;border-radius:50%;top:-2px;transform:translateX(-50%);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.15);z-index:2}
-.zone-tags{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
-.zt{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:600}
-.zt-r{background:#fde8e8;color:#c0392b}.zt-o{background:#ffe6d0;color:#d35400}
-.zt-y{background:#fff9e0;color:#b8860b}.zt-g{background:#e8f5e9;color:#1e8449}
-.hist{display:flex;gap:3px;font-size:9px;color:var(--sub);margin-top:6px;flex-wrap:wrap}
-.hist span{background:#f0f2f5;padding:1px 5px;border-radius:3px}
-.dates-row{display:flex;gap:12px;font-size:10px;color:var(--sub);margin-top:6px;padding-top:6px;border-top:1px solid #f0f2f5}
+/* 营收利润条 */
+.trend-bars{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:4px;padding:0 4px}
+.trend-bar{flex:1;text-align:center;font-size:8px;color:var(--sub)}
+.trend-bar .rev{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(#2980b9,#58a6ff);min-height:2px}
+.trend-bar .np{width:65%;margin:1px auto 0;border-radius:3px 3px 0 0;background:linear-gradient(#e67e22,#f0a040);min-height:2px}
+.trend-bar .yr{font-size:9px;margin-top:2px}
+/* 股息率节点表 */
+.div-table{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0}
+.div-table td{padding:5px 4px;text-align:center;border-bottom:1px solid #f0f2f5}
+.div-table tr.current td{color:var(--red);font-weight:700;font-size:12px}
+.div-table tr.current td:first-child{background:#fff0f0;border-radius:4px 0 0 4px}
+.div-table tr.current td:last-child{background:#fff0f0;border-radius:0 4px 4px 0}
+/* 目标价横向条 */
+.price-range{position:relative;height:36px;margin:8px 0;border-radius:4px;overflow:hidden}
+.price-range .bg{position:absolute;width:100%;height:100%;border-radius:4px;background:linear-gradient(90deg,#d0f0d8 0%,#fff8d0 50%,#fde8e8 100%)}
+.price-range .mark{position:absolute;top:0;height:100%;width:2px;background:var(--text);z-index:1}
+.price-range .mark-lbl{position:absolute;top:100%;font-size:9px;transform:translateX(-50%);white-space:nowrap;margin-top:2px;font-weight:600}
+.price-range .cur{position:absolute;top:2px;height:30px;width:3px;background:var(--red);z-index:2;border-radius:1px}
+.price-range .cur-lbl{position:absolute;top:-18px;font-size:10px;font-weight:700;color:var(--red);transform:translateX(-50%);white-space:nowrap}
+.hist{display:flex;gap:3px;font-size:10px;color:var(--sub);flex-wrap:wrap}
+.hist span{background:#f0f2f5;padding:2px 5px;border-radius:3px}
+.dates-row{display:flex;gap:12px;font-size:11px;color:var(--sub);padding:4px 0}
 
 /* ═══ 模拟器/机会/日历 ═══ */
 .sim-header{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
@@ -178,32 +191,54 @@ function renderAll(){
   }
   document.getElementById('dash').innerHTML=dash.join('');
 
-  // ═══ 个股详情 ═══
-  var detail=[];var sel='<div style="margin-bottom:12px;font-size:11px;color:var(--sub)">点击下方查看个股详细介绍</div>';
-  var names=[];
+  // ═══ 个股详情（折叠面板） ═══
+  var detail=[];
+  var sel='<div style="margin-bottom:12px;font-size:11px;color:var(--sub)">点击股票行展开查看详细数据</div>';
   for(var i=0;i<data.length;i++){
     var r=data[i];
-    if(!r.ok){detail.push('<div class="detail-card"><div class="detail-name">'+r.name+'</div><div style="font-size:11px;color:var(--sub)">加载中...</div></div>');names.push(r.name);continue;}
+    if(!r.ok){detail.push('<div class="acc-item"><div class="acc-head"><span class="name">'+r.name+'</span><span style="font-size:11px;color:var(--sub)">加载中...</span><span class="arrow">▼</span></div></div>');continue;}
     var up=r.chg>0;var lvl=divLevel(r.divR);var clr=divColor(r.divR);
     var pct=divBarPct(r.divR);
-    var nudge='';if(r.needy>0)nudge='距目标还需跌 ¥'+r.needy.toFixed(2)+'（'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%）';else if(r.needy===0)nudge='🎯 已触及目标价！';else nudge='✅ 低于目标 ¥'+Math.abs(r.needy).toFixed(2);
+    // 股息率节点表
+    var nodes=[6,5.5,5.3,5,4.5,4];
+    var nodeRows='';
+    for(var ni=0;ni<nodes.length;ni++){
+      var np=Math.round(r.div/nodes[ni]*100)/100;
+      var isCur=Math.abs(r.price-np)<0.5;
+      nodeRows+='<tr'+(isCur?' class="current"':'')+'><td>'+nodes[ni].toFixed(1)+'%</td><td>¥'+np.toFixed(2)+'</td><td>'+(r.price>=np?'高于节点 ↑':'低于节点 ↓')+'</td></tr>';
+    }
+    // 价格区间
+    var lo=Math.round(r.div/6*100)/100, hi=Math.round(r.div/4*100)/100;
+    var cpos=Math.max(0,Math.min(100,(r.price-lo)/(hi-lo)*100));
+    // 营收/利润
+    var rev=null,np=null;
+    if(r.code==='600036'){rev=[3313,3448,3391,3375,3300];np=[1200,1380,1466,1484,1502];}
+    else if(r.code==='000651'){rev=[1897,1902,2050,1900,1711];np=[231,245,290,322,290];}
+    else if(r.code==='601318'){rev=[11800,12200,9700,10300,11400];np=[1016,838,857,1267,1520];}
+    else if(r.code==='600941'){rev=[8483,9373,10093,10408,10502];np=[1159,1255,1318,1384,1502];}
+    var bars='';
+    if(rev&&np){
+      var rMax=Math.max.apply(null,rev),nMax=Math.max.apply(null,np);
+      var yrs=['21','22','23','24','25'];
+      for(var bi=0;bi<5;bi++)bars+='<div class="trend-bar"><div class="rev" style="height:'+(rev[bi]/rMax*60)+'px"></div><div class="np" style="height:'+(np[bi]/nMax*28)+'px"></div><div class="yr">'+yrs[bi]+'</div></div>';
+    }
+    // 分红历史
     var histStr='';var hist=r.divHist||[];for(var j=0;j<hist.length;j++)histStr+='<span>'+(j?'→ ':'')+'¥'+hist[j]+'</span>';
-    names.push(r.name);
-    detail.push('<div class="detail-card"><div class="detail-head"><div><div class="detail-name">'+r.name+'<span class="detail-code"> '+r.code+'</span></div><span class="detail-tag '+r.tag+'">'+r.role+'</span></div><div style="text-align:right;font-size:10px;color:var(--sub)">补仓≤¥'+r.buy+'</div></div>'+
-      '<div class="detail-price">¥'+r.price.toFixed(2)+'<span class="detail-chg '+(up?'dl-chg-up':'dl-chg-down')+'" style="margin-left:8px">'+(up?'+':'')+r.chg.toFixed(2)+'%</span></div>'+
-      '<div class="mgrid">'+
-      '<div class="m"><span class="k">PE（TTM）</span><span class="kv">'+r.pe.toFixed(1)+'</span></div>'+
-      '<div class="m"><span class="k">PB</span><span class="kv">'+r.pb.toFixed(2)+'</span></div>'+
-      '<div class="m"><span class="k">ROE</span><span class="kv">'+r.roe.toFixed(1)+'%</span></div>'+
-      '<div class="m"><span class="k">每股分红</span><span class="kv">¥'+r.div.toFixed(2)+'</span></div>'+
-      '<div class="m"><span class="k">市值</span><span class="kv">'+r.mcap.toFixed(0)+'亿</span></div>'+
-      '<div class="m"><span class="k">股息率</span><span class="kv" style="color:'+clr+'">'+r.divR.toFixed(2)+'%</span></div>'+
-      '</div>'+
-      '<div class="div-hint">'+nudge+'</div>'+
-      '<div class="div-full-bar"><div class="track"><div class="fill" style="left:0;width:25%;background:#ffd0d0"></div><div class="fill" style="left:25%;width:25%;background:#ffe0c0"></div><div class="fill" style="left:50%;width:25%;background:#fff8d0"></div><div class="fill" style="left:75%;width:25%;background:#d0f0d8"></div><div class="pin" style="left:'+pct+'%;background:'+clr+'"></div></div></div>'+
-      '<div class="zone-tags"><span class="zt zt-r">贵 ＜5%</span><span class="zt zt-o">偏贵 5-5.3%</span><span class="zt zt-y">接近 5.3-5.5%</span><span class="zt zt-g">便宜 ＞5.5%</span></div>'+
-      '<div class="hist">近5年分红：'+histStr+'</div>'+
-      '<div class="dates-row"><span>📅 财报：'+r.earn+'</span><span>💵 分红：'+r.divDt+'</span></div></div>');
+    var nudge='';if(r.needy>0)nudge='高于补仓价 ¥'+r.needy.toFixed(2);else if(r.needy===0)nudge='等于补仓价';else nudge='低于补仓价 ¥'+Math.abs(r.needy).toFixed(2)+' ✅';
+    var adviceStr=r.dist<=5?'可关注':r.needy<0?'已进入补仓区':'观望';
+
+    detail.push(
+'<div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)"><span class="name"><span style="font-size:12px;font-weight:400;color:var(--sub);margin-right:4px">'+(i+1)+'</span>'+r.name+'</span><span class="price">¥'+r.price.toFixed(2)+'</span><span class="chg '+(up?'chg-up':'chg-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span><span class="arrow">▼</span></div>'+
+'<div class="acc-body">'+
+  '<div class="dl-section"><h4>📈 估值与业绩趋势</h4><div class="mgrid"><div class="m"><span class="k">PE</span><span class="kv">'+r.pe.toFixed(1)+'</span></div><div class="m"><span class="k">PB</span><span class="kv">'+r.pb.toFixed(2)+'</span></div><div class="m"><span class="k">ROE</span><span class="kv">'+r.roe.toFixed(1)+'%</span></div><div class="m"><span class="k">市值</span><span class="kv">'+r.mcap.toFixed(0)+'亿</span></div></div>'+
+  (bars?'<div style="font-size:10px;color:var(--sub);margin-top:6px"><span style="color:#2980b9">■ 营收</span> <span style="color:#e67e22;margin-left:8px">■ 净利</span>（亿元）</div><div class="trend-bars">'+bars+'</div>':'')+'</div>'+
+  '<div class="dl-section"><h4>💵 近五年每股分红</h4><div class="hist">'+histStr+'</div></div>'+
+  '<div class="dl-section"><h4>🎯 目标价定位（左低右高）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+
+  '<div class="price-range"><div class="bg"></div><div class="mark" style="left:0%"><span class="mark-lbl">¥'+lo.toFixed(0)+'</span></div><div class="mark" style="left:50%"><span class="mark-lbl" style="color:var(--orange)">¥'+r.buy+'</span></div><div class="mark" style="left:100%"><span class="mark-lbl">¥'+hi.toFixed(0)+'</span></div><div class="cur" style="left:'+cpos+'%"><span class="cur-lbl">¥'+r.price.toFixed(2)+'</span></div></div></div>'+
+  '<div class="dl-section"><h4>📊 股息率对应股价</h4><table class="div-table"><tr><td style="color:var(--sub);font-size:10px">股息率</td><td style="color:var(--sub);font-size:10px">股价</td><td style="color:var(--sub);font-size:10px">状态</td></tr>'+nodeRows+'</table></div>'+
+  '<div class="dl-section"><h4>📅 事件提醒</h4><div class="dates-row"><span>📊 财报：'+(r.earn||'—')+'</span><span>💵 分红：'+(r.divDt||'—')+'</span></div></div>'+
+'</div></div>'
+    );
   }
   document.getElementById('detail').innerHTML=sel+detail.join('');
 
@@ -232,6 +267,7 @@ function renderAll(){
 function onShareChange(code,val){shares[code]=parseInt(val)||0;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}document.getElementById('o_'+code).textContent='¥'+Math.round(getAnn(code));var ann=Math.round(calcTotal(getAnn));var totalEl=document.getElementById('simT');if(totalEl)totalEl.textContent='¥'+ann.toLocaleString()}
 
 function switchTab(btn,id){document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');['dash','detail','divcenter','opp'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});var e=document.getElementById(id);if(e)e.classList.remove('hidden')}
+function toggleAcc(el){var body=el.nextElementSibling;body.classList.toggle('show');el.classList.toggle('open')}
 
 load();
 setInterval(load,60000);
