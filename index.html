@@ -19,17 +19,17 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .st{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 8px;text-align:center}
 .st .l{font-size:10px;color:var(--sub)}
 .st .v{font-size:20px;font-weight:800;margin-top:3px}
-.dc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;position:relative}
+.dc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;position:relative;min-height:130px;margin-bottom:0}
 .dc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px 0 0 2px}
 .dc.safe::before{background:var(--green)}
 .dc.warn::before{background:var(--orange)}
 .dc.danger::before{background:var(--red)}
 .dc.yellow::before{background:var(--yellow)}
-.dc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.dc-top .name{font-size:15px;font-weight:700}
-.dc-top .code{font-size:11px;color:var(--sub);margin-left:4px}
-.dc-p{font-size:24px;font-weight:800}
-.chip{font-size:12px;font-weight:700;padding:2px 7px;border-radius:4px;color:#fff}
+.dc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.dc-top .name{font-size:13px;font-weight:700;line-height:1.2}
+.dc-top .code{font-size:10px;color:var(--sub);margin-left:3px}
+.dc-p{font-size:22px;font-weight:800;line-height:1.2}
+.chip{font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;color:#fff}
 .chip-up{background:#fde8e8;color:var(--red)}
 .chip-down{background:#e8f5e9;color:var(--green)}
 .tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600}
@@ -235,10 +235,7 @@ function renderAll(){
 
   // ═══ 首页 ═══
   var ann=Math.round(calcTotal(getAnn));
-  var dash='<div class="sts">'+
-    '<div class="st"><div class="l">标的</div><div class="v">'+CFG.length+'</div></div>'+
-    '<div class="st"><div class="l">年分红</div><div class="v">¥'+ann.toLocaleString()+'</div></div>'+
-    '<div class="st"><div class="l">月均</div><div class="v">¥'+(ann/12).toFixed(0)+'</div></div></div>';
+  var dash='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
 
   for(var i=0;i<data.length;i++){
     var r=data[i];
@@ -253,14 +250,15 @@ function renderAll(){
     else if(r.needy<0)nudge='高于补仓价 ¥'+Math.abs(r.needy).toFixed(2);
     else nudge='已达到目标价';
     dash+='<div class="dc '+lvl+'"><div class="dc-top">'+
-      '<div><span class="name">'+r.name+'</span><span class="code"> '+r.code+'</span> <span class="tag '+r.tag+'">'+r.role+'</span></div>'+
+      '<div><span class="name">'+r.name+'</span><span class="code"> '+r.code+'</span></div>'+
       '<span class="adv '+adv.cls+'">'+adv.text+'</span></div>'+
       '<div class="dc-p">¥'+r.price.toFixed(2)+' <span class="chip '+(up?'chip-up':'chip-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span></div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:4px"><span>股息率</span><b style="color:'+clr+'">'+r.divR.toFixed(2)+'%</b></div>'+
-      '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+clr+'"></div><div class="bar-dot" style="left:'+pct+'%;background:'+clr+'"></div></div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--sub);margin-top:4px"><span>距目标</span><b>'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</b></div>'+
-      '<div style="font-size:10px;color:var(--sub);margin-top:6px">'+nudge+'</div></div>';
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-top:3px"><span>股息率</span><b style="color:'+clr+'">'+r.divR.toFixed(2)+'%</b></div>'+
+      '<div class="bar-track" style="height:4px"><div class="bar-fill" style="width:'+pct+'%;background:'+clr+'"></div><div class="bar-dot" style="left:'+pct+'%;background:'+clr+'"></div></div>'+
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-top:3px"><span>距目标</span><b>'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</b></div>'+
+    '</div>';
   }
+  dash+='</div>';
   document.getElementById('dash').innerHTML=dash;
 
   // ═══ 个股详情（折叠） ═══
