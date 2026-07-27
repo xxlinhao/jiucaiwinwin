@@ -74,15 +74,20 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .div-table tr.current td{background:#fff0f0;font-weight:700;color:var(--red)}
 /* 目标价横向条 */
 /* 分段目标价条 */
-.divseg-wrap{padding:18px 0 8px;position:relative}
-.divseg-cur{position:absolute;top:-2px;font-size:10px;font-weight:700;color:var(--red);text-align:center;transform:translateX(-50%);white-space:nowrap}
+.divseg-wrap{padding:20px 4px 24px;position:relative}
+.divseg-cur{position:absolute;top:0;font-size:11px;font-weight:700;color:var(--red);text-align:center;transform:translateX(-50%);white-space:nowrap;background:#fff;padding:0 4px;z-index:2}
 .divseg-cur::after{content:'';display:block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--red);margin:0 auto}
-.divseg-bar{display:flex;height:18px;border-radius:4px;overflow:hidden;border:1px solid #d8dade}
-.divseg-seg{flex:1;border-right:1px solid rgba(255,255,255,.6);position:relative}
-.divseg-seg:last-child{border-right:none}
-.divseg-rate{position:absolute;top:-15px;font-size:10px;font-weight:700;width:100%;text-align:center}
-.divseg-price{position:absolute;bottom:-15px;font-size:9px;color:var(--sub);width:100%;text-align:center}
-.divseg-tick{position:absolute;top:-4px;bottom:-4px;width:1px;background:#8b92a0;opacity:.4}
+.divseg-bar{display:flex;height:20px;border-radius:5px;gap:2px;position:relative}
+.divseg-seg{flex:1;position:relative;min-width:0;border-radius:3px}
+.divseg-seg:nth-child(1){background:#d0f0d8}
+.divseg-seg:nth-child(2){background:#c8eccf}
+.divseg-seg:nth-child(3){background:#e8f5e0}
+.divseg-seg:nth-child(4){background:#fff8d0}
+.divseg-seg:nth-child(5){background:#ffe0c0}
+.divseg-seg:nth-child(6){background:#fde8e8}
+.divseg-rate{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;white-space:nowrap}
+.divseg-price{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--sub);white-space:nowrap}
+.divseg-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(0,0,0,.15)}
 .hist{display:flex;gap:3px;font-size:10px;color:var(--sub);flex-wrap:wrap}
 .hist span{background:#f0f2f5;padding:2px 5px;border-radius:3px}
 .dates-row{display:flex;gap:12px;font-size:11px;color:var(--sub);padding:4px 0}
@@ -234,12 +239,12 @@ function renderAll(){
     var segHTML='';
     for(var sk=0;sk<rateNodes.length;sk++){
       var leftP=Math.max(pMin,r.div/(rateNodes[sk].rate/100));
-      var rightP=sk<rateNodes.length-1?r.div/(rateNodes[sk+1].rate/100):pMax*1.1;
+      var rightP=sk<rateNodes.length-1?r.div/(rateNodes[sk+1].rate/100):pMax*1.05;
       var leftPos=(leftP-pMin)/(pMax-pMin)*100;
-      var rightPos=(Math.min(pMax*1.1,rightP)-pMin)/(pMax-pMin)*100;
-      var w=Math.max(2,rightPos-leftPos);
+      var rightPos=(Math.min(pMax*1.05,rightP)-pMin)/(pMax-pMin)*100;
+      var w=Math.max(3,rightPos-leftPos);
       var priceAtRate=r.div/(rateNodes[sk].rate/100);
-      segHTML+='<div class="divseg-seg" style="left:'+leftPos.toFixed(1)+'%;width:'+w.toFixed(1)+'%;background:'+rateNodes[sk].color+'"><div class="divseg-rate" style="color:'+rateNodes[sk].color2+'">'+rateNodes[sk].rate.toFixed(1)+'%</div><div class="divseg-price">¥'+priceAtRate.toFixed(2)+'</div></div>';
+      segHTML+='<div class="divseg-seg" style="left:'+leftPos.toFixed(1)+'%;width:'+w.toFixed(1)+'%"><div class="divseg-rate" style="color:'+rateNodes[sk].color2+'">'+rateNodes[sk].rate.toFixed(1)+'%</div><div class="divseg-price">¥'+priceAtRate.toFixed(2)+'</div></div>';
     }
     var curSeg=0;
     if(r.price<=pMin)curSeg=0;
