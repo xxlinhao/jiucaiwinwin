@@ -226,39 +226,34 @@ function renderAll(){
     var segHTML='';
     // 单个 SVG 把整个分段条、刻度、标签、当前价位置都画出来
     // 横轴按价格等距：rate=6 → 最小价(左)，rate=4 → 最大价(右)
-    function pos(price){return Math.max(0,Math.min(100,(price-axesMin)/(axesMax-axesMin)*100))}
+    function pos(price){return Math.max(1,Math.min(99,(price-axesMin)/(axesMax-axesMin)*100))}
     var rateVals=[6,5.5,5.3,5,4.5,4];
-    var axesMin=r.div/0.07; // 7% 股息率对应价（最左）
-    var axesMax=r.div/0.035; // 3.5% 股息率对应价（最右）
-    var segTop=22,segHeight=22,segBottom=segTop+segHeight;
-    var labelTop=segBottom+14,labelBottom=labelTop+14;
-    segHTML+='<svg class="divseg-svg" viewBox="0 0 380 90">';
-    // 6 个分段
+    var axesMin=r.div/0.07;
+    var axesMax=r.div/0.035;
+    var segH=26,segTop=26,segBottom=52,svgH=100;
+    var labelTop=segBottom+12,labelBottom=labelTop+12;
+    segHTML+='<svg class="divseg-svg" viewBox="0 0 400 '+svgH+'">';
     var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#ffe0c0','#fde8e8'];
     var txtColors=['#27ae60','#27ae60','#7fb069','#e5b800','#e67e22','#e74c3c'];
     for(var kk=0;kk<6;kk++){
       var leftP=pos(r.div/(rateVals[kk]/100));
-      var rightP=kk<5?pos(r.div/(rateVals[kk+1]/100)):100;
-      var segX=Math.max(0,leftP), segW=Math.max(2,rightP-segX);
-      segHTML+='<rect x="'+segX.toFixed(2)+'%" y="'+segTop+'" width="'+segW.toFixed(2)+'%" height="'+segHeight+'" fill="'+segColors[kk]+'" rx="2"/>';
+      var rightP=kk<5?pos(r.div/(rateVals[kk+1]/100)):99;
+      var segX=leftP, segW=Math.max(2,rightP-segX);
+      segHTML+='<rect x="'+segX.toFixed(2)+'%" y="'+segTop+'" width="'+segW.toFixed(2)+'%" height="'+segH+'" fill="'+segColors[kk]+'" rx="3"/>';
     }
-    // 6 个刻度（边界处），下方标 股息率 + 股价
     for(var kk=0;kk<6;kk++){
       var tickX=pos(r.div/(rateVals[kk]/100));
       segHTML+='<line x1="'+tickX.toFixed(2)+'%" y1="'+(segTop-3)+'" x2="'+tickX.toFixed(2)+'%" y2="'+(segBottom+3)+'" stroke="'+txtColors[kk]+'" stroke-width="1.2"/>';
-      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelTop+'" font-size="10" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
-      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelBottom+'" font-size="9" fill="#8b92a0" text-anchor="middle">¥'+(r.div/(rateVals[kk]/100)).toFixed(2)+'</text>';
+      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelTop+'" font-size="11" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
+      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelBottom+'" font-size="10" fill="#8b92a0" text-anchor="middle">'+(r.div/(rateVals[kk]/100)).toFixed(1)+'</text>';
     }
-    // 当前价倒三角 + 标签（位置精确一致）
     var curPct=pos(r.price);
-    // 红框背景：用宽度自适应，不用百分比定位
-    var boxWidth=Math.max(22,6.5*r.price.toFixed(2).length+8);
-    var boxX=Math.max(2,Math.min(100-boxWidth,curPct-boxWidth/2));
-    segHTML+='<polygon points="'+(curPct-0.8)+'%,18 '+(curPct+0.8)+'%,18 '+curPct.toFixed(2)+'%,22" fill="#e74c3c"/>';
-    segHTML+='<rect x="'+boxX.toFixed(2)+'%" y="2" width="'+boxWidth.toFixed(2)+'%" height="14" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="1"/>';
-    segHTML+='<text x="'+((boxX+boxWidth/2)).toFixed(2)+'%" y="12" font-size="10" font-weight="700" fill="#e74c3c" text-anchor="middle">¥'+r.price.toFixed(2)+'</text>';
-    // 三角下方画一条竖线连到对应分段位置
-    segHTML+='<line x1="'+curPct.toFixed(2)+'%" y1="22" x2="'+curPct.toFixed(2)+'%" y2="'+(segBottom-2)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="2,2"/>';
+    var lbW=7,lbH=14;
+    var lbX=Math.max(2,Math.min(100-lbW,curPct-lbW/2));
+    segHTML+='<polygon points="'+(curPct-1.2)+'%,16 '+(curPct+1.2)+'%,16 '+curPct.toFixed(2)+'%,22" fill="#e74c3c"/>';
+    segHTML+='<rect x="'+lbX.toFixed(2)+'%" y="2" width="'+lbW.toFixed(2)+'%" height="'+lbH+'" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="1.5"/>';
+    segHTML+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="12" font-size="10" font-weight="800" fill="#e74c3c" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
+    segHTML+='<line x1="'+curPct.toFixed(2)+'%" y1="22" x2="'+curPct.toFixed(2)+'%" y2="'+(segTop-1)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="2,3"/>';
     segHTML+='</svg>';
     // 营收/利润
     var rev=null,np=null;
@@ -295,7 +290,20 @@ function renderAll(){
       for(var bi=0;bi<5;bi++){
         var px=padL+(bi+0.5)*(chartW/5);
         var py=padT+chartH-(np[bi]/nMax)*chartH*0.7;
-        svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="3" fill="#e67e22"/>';
+        var cl=(np[bi]<0?'#e74c3c':'#e67e22');
+        var r=(np[bi]<0?5:3);
+        if(np[bi]<0)svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="5" fill="none" stroke="#e74c3c" stroke-width="2"/>';
+        svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="'+r+'" fill="'+cl+'"/>';
+        var vStr=np[bi]>=10000?(np[bi]/10000).toFixed(1)+'万':String(np[bi]);
+        svg+='<text x="'+px.toFixed(1)+'" y="'+(py-8)+'" font-size="8" fill="'+cl+'" text-anchor="middle" font-weight="700">'+vStr+'</text>';
+      }
+      // 营收柱上标数值
+      var barW2=chartW/5*0.55;
+      for(var bi=0;bi<5;bi++){
+        var bx2=padL+(bi+0.5)*(chartW/5)-barW2/2;
+        var bh2=Math.max(2,(rev[bi]/rMax)*chartH);
+        var revStr=rev[bi]>=10000?(rev[bi]/10000).toFixed(1)+'万':String(rev[bi]);
+        svg+='<text x="'+(bx2+barW2/2).toFixed(1)+'" y="'+(padT+chartH-bh2-3)+'" font-size="7.5" fill="#2980b9" text-anchor="middle" font-weight="600">'+revStr+'</text>';
       }
       // 年份标签
       for(var bi=0;bi<5;bi++){
