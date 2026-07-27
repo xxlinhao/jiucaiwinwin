@@ -208,28 +208,13 @@ function renderAll(){
     if(!r.ok){detail.push('<div class="acc-item" data-idx="'+i+'"><div class="acc-head"><span class="name">'+r.name+'</span><span style="font-size:11px;color:var(--sub)">加载中...</span><span class="arrow">▼</span></div></div>');continue;}
     var up=r.chg>0;var lvl=divLevel(r.divR);var clr=divColor(r.divR);
     var pct=divBarPct(r.divR);
-    // 股息率节点表（横向布局，公式：股价 = 每股分红 / 股息率）
-    var nodes=[6,5.5,5.3,5,4.5,4];
-    var nodeRows='<tr style="background:#f8f9fb"><td class="col-rate">股息率</td><td class="col-rate">对应股价</td><td class="col-rate">差值</td></tr>';
-    for(var ni=0;ni<nodes.length;ni++){
-      var np=Math.round(r.div/(nodes[ni]/100)*100)/100;
-      var diff=r.price-np;
-      var isCur=Math.abs(diff)<0.5;
-      nodeRows+='<tr'+(isCur?' class="current"':'')+'><td class="col-rate">'+nodes[ni].toFixed(1)+'%</td><td class="col-price">¥'+np.toFixed(2)+'</td><td>'+(diff>=0?'+':'')+diff.toFixed(2)+'</td></tr>';
-    }
-    // 分段股息率条（节点对应股价，价格从低到高）
-    var rateNodes=[{rate:6,color:'#d0f0d8',color2:'#27ae60'},{rate:5.5,color:'#c8eccf',color2:'#27ae60'},{rate:5.3,color:'#e8f5e0',color2:'#7fb069'},{rate:5,color:'#fff8d0',color2:'#e5b800'},{rate:4.5,color:'#ffe0c0',color2:'#e67e22'},{rate:4,color:'#fde8e8',color2:'#e74c3c'}];
-    // 边界价格：rate=6 对应价格最小，rate=4 对应价格最大
-    var priceBound=[];for(var kk=0;kk<rateNodes.length;kk++)priceBound.push(r.div/(rateNodes[kk].rate/100));
-    priceBound.sort(function(a,b){return a-b;});
-    var pMin=priceBound[0],pMax=priceBound[priceBound.length-1];
     var segHTML='';
     // 单个 SVG 把整个分段条、刻度、标签、当前价位置都画出来
     // 横轴按价格等距：rate=6 → 最小价(左)，rate=4 → 最大价(右)
-    function pos(price){return Math.max(1,Math.min(99,(price-axesMin)/(axesMax-axesMin)*100))}
     var rateVals=[6,5.5,5.3,5,4.5,4];
     var axesMin=r.div/0.07;
     var axesMax=r.div/0.035;
+    function pos(price){return Math.max(1,Math.min(99,(price-axesMin)/(axesMax-axesMin)*100))}
     var segH=26,segTop=26,segBottom=52,svgH=100;
     var labelTop=segBottom+12,labelBottom=labelTop+12;
     segHTML+='<svg class="divseg-svg" viewBox="0 0 400 '+svgH+'">';
@@ -265,50 +250,45 @@ function renderAll(){
     if(rev&&np){
       var rMax=Math.max.apply(null,rev),nMax=Math.max.apply(null,np);
       var yrs=['21','22','23','24','25'];
-      // SVG 柱状+折线 组合图
-      var w=320,h=80,padL=30,padR=8,padT=6,padB=18;
+      // SVG 柱状+折线 组合图（营收浅蓝柱 + 净利折线 + 数值标签）
+      var w=320,h=90,padL=30,padR=8,padT=10,padB=18;
       var chartW=w-padL-padR,chartH=h-padT-padB;
       var barW=chartW/5*0.55;
-      var svg='<svg class="trend-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">';
-      // 背景网格
-      var yMid=padT+chartH*0.6;
-      svg+='<line x1="'+padL+'" y1="'+yMid+'" x2="'+(w-padR)+'" y2="'+yMid+'" stroke="#f0f2f5" stroke-width="0.5"/>';
-      // 柱状（营收）
+      var svg='<svg class="trend-svg" viewBox="0 0 '+w+' '+h+'">';
+      svg+='<line x1="'+padL+'" y1="'+(padT+chartH*0.6)+'" x2="'+(w-padR)+'" y2="'+(padT+chartH*0.6)+'" stroke="#f0f2f5" stroke-width="0.5"/>';
+      // 营收柱（浅蓝）
       for(var bi=0;bi<5;bi++){
         var bx=padL+(bi+0.5)*(chartW/5)-barW/2;
         var bh=Math.max(2,(rev[bi]/rMax)*chartH);
-        svg+='<rect x="'+bx.toFixed(1)+'" y="'+(padT+chartH-bh).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+bh.toFixed(1)+'" fill="#2980b9" rx="2"/>';
+        svg+='<rect x="'+bx.toFixed(1)+'" y="'+(padT+chartH-bh).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+bh.toFixed(1)+'" fill="#5dade2" rx="2"/>';
+        // 营收数值标签
+        var revStr=rev[bi]>=10000?(rev[bi]/10000).toFixed(1)+'万':String(rev[bi]);
+        svg+='<text x="'+(bx+barW/2).toFixed(1)+'" y="'+(padT+chartH-bh-3).toFixed(1)+'" font-size="7" fill="#2980b9" text-anchor="middle" font-weight="600">'+revStr+'</text>';
       }
-      // 折线（净利）
+      // 净利折线 + 圆点 + 数值标签
       var pts=[];
+      var npPos=[];
       for(var bi=0;bi<5;bi++){
         var px=padL+(bi+0.5)*(chartW/5);
-        var py=padT+chartH-(np[bi]/nMax)*chartH*0.7;
-        pts.push(px+','+py);
+        var py=padT+chartH-((np[bi]/nMax)*chartH*0.7);
+        pts.push(px.toFixed(1)+','+py.toFixed(1));
+        npPos.push({x:px,y:py,v:np[bi]});
       }
       svg+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#e67e22" stroke-width="2"/>';
       for(var bi=0;bi<5;bi++){
-        var px=padL+(bi+0.5)*(chartW/5);
-        var py=padT+chartH-(np[bi]/nMax)*chartH*0.7;
-        var cl=(np[bi]<0?'#e74c3c':'#e67e22');
-        var r=(np[bi]<0?5:3);
-        if(np[bi]<0)svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="5" fill="none" stroke="#e74c3c" stroke-width="2"/>';
-        svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="'+r+'" fill="'+cl+'"/>';
-        var vStr=np[bi]>=10000?(np[bi]/10000).toFixed(1)+'万':String(np[bi]);
-        svg+='<text x="'+px.toFixed(1)+'" y="'+(py-8)+'" font-size="8" fill="'+cl+'" text-anchor="middle" font-weight="700">'+vStr+'</text>';
-      }
-      // 营收柱上标数值
-      var barW2=chartW/5*0.55;
-      for(var bi=0;bi<5;bi++){
-        var bx2=padL+(bi+0.5)*(chartW/5)-barW2/2;
-        var bh2=Math.max(2,(rev[bi]/rMax)*chartH);
-        var revStr=rev[bi]>=10000?(rev[bi]/10000).toFixed(1)+'万':String(rev[bi]);
-        svg+='<text x="'+(bx2+barW2/2).toFixed(1)+'" y="'+(padT+chartH-bh2-3)+'" font-size="7.5" fill="#2980b9" text-anchor="middle" font-weight="600">'+revStr+'</text>';
+        var p=npPos[bi];
+        var isNeg=p.v<0;
+        var cl=isNeg?'#e74c3c':'#e67e22';
+        if(isNeg)svg+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="5" fill="none" stroke="#e74c3c" stroke-width="2"/>';
+        svg+='<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+ (isNeg?5:3) +'" fill="'+cl+'"/>';
+        var npStr=p.v>=10000?(p.v/10000).toFixed(1)+'万':String(p.v);
+        var labelY=isNeg?(p.y+12):(p.y-7);
+        svg+='<text x="'+p.x.toFixed(1)+'" y="'+labelY.toFixed(1)+'" font-size="7" fill="'+cl+'" text-anchor="middle" font-weight="700">'+(isNeg?'⚠':'')+npStr+'</text>';
       }
       // 年份标签
       for(var bi=0;bi<5;bi++){
         var lx=padL+(bi+0.5)*(chartW/5);
-        svg+='<text x="'+lx.toFixed(1)+'" y="'+(h-4)+'" font-size="9" fill="#8b92a0" text-anchor="middle">'+yrs[bi]+'</text>';
+        svg+='<text x="'+lx.toFixed(1)+'" y="'+(h-4)+'" font-size="8" fill="#8b92a0" text-anchor="middle">'+yrs[bi]+'</text>';
       }
       svg+='</svg>';
       bars=svg;
@@ -323,7 +303,7 @@ function renderAll(){
 '<div class="acc-item" data-idx="'+i+'"><div class="acc-head" onclick="toggleAcc(this)"><span class="name"><span style="font-size:12px;font-weight:400;color:var(--sub);margin-right:4px">'+(i+1)+'</span>'+r.name+'</span><span class="price">¥'+r.price.toFixed(2)+'</span><span class="chg '+(up?'chg-up':'chg-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span><span class="arrow">▼</span></div>'+
 '<div class="acc-body">'+
   '<div class="dl-section"><h4>📈 估值与业绩趋势</h4><div class="mgrid"><div class="m"><span class="k">PE</span><span class="kv">'+r.pe.toFixed(1)+'</span></div><div class="m"><span class="k">PB</span><span class="kv">'+r.pb.toFixed(2)+'</span></div><div class="m"><span class="k">ROE</span><span class="kv">'+r.roe.toFixed(1)+'%</span></div><div class="m"><span class="k">市值</span><span class="kv">'+r.mcap.toFixed(0)+'亿</span></div></div>'+
-  (bars?'<div style="font-size:10px;color:var(--sub);margin-top:6px"><span style="color:#2980b9">■ 营收</span> <span style="color:#e67e22;margin-left:8px">■ 净利</span>（亿元）</div><div class="trend-bars">'+bars+'</div>':'')+'</div>'+
+  (bars?'<div style="font-size:10px;color:var(--sub);margin-top:6px"><span style="color:#2980b9">■ 营收</span> <span style="color:#e67e22;margin-left:8px">■ 净利</span>（亿元）</div>'+bars+''):'')+'</div>'+
   '<div class="dl-section"><h4>💵 近五年每股分红</h4><div class="hist">'+histStr+'</div></div>'+
   '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+segHTML+'</div>'+
   '<div class="dl-section"><h4>📅 事件提醒</h4><div class="dates-row"><span>📊 财报：'+(r.earn||'—')+'</span><span>💵 分红：'+(r.divDt||'—')+'</span></div></div>'+
