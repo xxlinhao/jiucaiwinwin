@@ -120,11 +120,44 @@ var shares={};
 try{shares=JSON.parse(localStorage.getItem('vc_shares')||'{}');}catch(e){shares={};}
 
 var CFG=[
-{name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,tag:'tag-c',role:'周期弹性',roe:12.5,divHist:['2.50','2.55','2.55','2.55','2.70'],earn:'2026-08-28',divDt:'2026-10-20'},
-{name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,tag:'tag-s',role:'稳定底仓',roe:14.8,divHist:['1.52','1.74','1.97','2.00','2.02'],earn:'2026-08-22',divDt:'2027-01-15'},
-{name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,tag:'tag-d',role:'高股息',roe:18.2,divHist:['3.00','2.00','3.38','3.00','3.00'],earn:'2026-08-18',divDt:'2026-08-28'},
-{name:'中国移动',code:'600941',mkt:1,div:4.70,buy:88,tag:'tag-b',role:'波动缓冲',roe:10.5,divHist:['2.09','3.87','4.41','4.56','4.70'],earn:'2026-08-15',divDt:'2026-09-10'},
+{name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,tag:'tag-c',role:'周期弹性',roe:12.5,divHist:['2.50','2.55','2.55','2.55','2.70'],earn:'2026-08-28',divDt:'2026-10-20',cfo:1680,fcf:850,cov:3.4,safe:'🟢安全'},
+{name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,tag:'tag-s',role:'稳定底仓',roe:14.8,divHist:['1.52','1.74','1.97','2.00','2.02'],earn:'2026-08-22',divDt:'2027-01-15',cfo:1970,fcf:1180,cov:3.9,safe:'🟢安全'},
+{name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,tag:'tag-d',role:'高股息',roe:18.2,divHist:['3.00','2.00','3.38','3.00','3.00'],earn:'2026-08-18',divDt:'2026-08-28',cfo:294,fcf:28,cov:1.7,safe:'🟡中等'},
+{name:'中国移动',code:'600941',mkt:1,div:4.70,buy:88,tag:'tag-b',role:'波动缓冲',roe:10.5,divHist:['2.09','3.87','4.41','4.56','4.70'],earn:'2026-08-15',divDt:'2026-09-10',cfo:3091,fcf:1820,cov:3.0,safe:'🟢安全'},
 ];
+
+function buildDivTrend(hist){
+  var nums=hist.map(function(v){return parseFloat(v);});
+  var w=320,h=80,padL=30,padR=8,padT=8,padB=20;
+  var chartW=w-padL-padR,chartH=h-padT-padB;
+  var maxN=Math.max.apply(null,nums);
+  var minN=Math.min.apply(null,nums);
+  var range=maxN-minN||1;
+  var pts=[];
+  for(var i=0;i<nums.length;i++){
+    var px=padL+(i+0.5)*(chartW/nums.length);
+    var py=padT+chartH-((nums[i]-minN)/range)*chartH*0.85;
+    pts.push(px.toFixed(1)+','+py.toFixed(1));
+  }
+  var svg='<svg class="trend-svg" viewBox="0 0 '+w+' '+h+'">';
+  svg+='<line x1="'+padL+'" y1="'+(padT+chartH*0.5)+'" x2="'+(w-padR)+'" y2="'+(padT+chartH*0.5)+'" stroke="#f0f2f5" stroke-width="0.5"/>';
+  svg+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#2980b9" stroke-width="2"/>';
+  for(var i=0;i<nums.length;i++){
+    var px=padL+(i+0.5)*(chartW/nums.length);
+    var py=padT+chartH-((nums[i]-minN)/range)*chartH*0.85;
+    svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="3" fill="#2980b9"/>';
+    svg+='<text x="'+px.toFixed(1)+'" y="'+(py-7)+'" font-size="8" fill="#333" text-anchor="middle" font-weight="700">¥'+nums[i].toFixed(2)+'</text>';
+    var yr=2026-nums.length+1+i;
+    svg+='<text x="'+px.toFixed(1)+'" y="'+(h-6)+'" font-size="8" fill="#8b92a0" text-anchor="middle">'+String(yr).slice(2)+'</text>';
+  }
+  svg+='</svg>';
+  // 同比变化
+  var last=nums[nums.length-1], prev=nums[nums.length-2];
+  var yoy=((last-prev)/prev*100);
+  var yoyTxt=(yoy>=0?'📈 同比去年上涨':'📉 同比去年下跌')+Math.abs(yoy).toFixed(2)+'%';
+  var yoyClr=yoy>=0?'var(--green)':'var(--red)';
+  return svg+'<div style="margin-top:6px;text-align:center;font-size:11px;font-weight:700;color:'+yoyClr+'">'+yoyTxt+'</div>';
+}
 var DIV_CAL=[
 {s:'格力电器',t:'年报',d:'2026-08',p10:20,hot:1},
 {s:'中国移动',t:'年报',d:'2026-09',p10:22},
@@ -244,36 +277,35 @@ function renderAll(){
     else nudge='等于补仓价';
     var adviceStr=r.needy>0?'已进入补仓区':r.dist<=5?'接近目标':'观望';
 
-    // 分段条 SVG
-    var rateVals=[6,5.5,5.3,5,4.5,4];
+    // 分段条 SVG（5 段：6/5.5/5/4.5/4）
+    var rateVals=[6,5.5,5,4.5,4];
     var axesMin=r.div/0.07;
     var axesMax=r.div/0.035;
     function pos(p){return Math.max(1,Math.min(99,(p-axesMin)/(axesMax-axesMin)*100))}
-    var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#ffe0c0','#fde8e8'];
-    var txtColors=['#27ae60','#27ae60','#7fb069','#e5b800','#e67e22','#e74c3c'];
+    var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#fde8e8'];
+    var txtColors=['#27ae60','#27ae60','#7fb069','#e67e22','#e74c3c'];
     var svg='<svg class="divseg-svg" viewBox="0 0 400 110">'; var segTop=28,segH=26,segBot=segTop+segH;
-    for(var kk=0;kk<6;kk++){
+    for(var kk=0;kk<5;kk++){
       var lP=pos(r.div/(rateVals[kk]/100));
-      var rP=kk<5?pos(r.div/(rateVals[kk+1]/100)):99;
+      var rP=kk<4?pos(r.div/(rateVals[kk+1]/100)):99;
       var segX=lP, segW=Math.max(2,rP-segX);
       svg+='<rect x="'+segX.toFixed(2)+'%" y="'+segTop+'" width="'+segW.toFixed(2)+'%" height="'+segH+'" fill="'+segColors[kk]+'" rx="3"/>';
     }
-    // 标签错开上下避免重叠
-    for(var kk=0;kk<6;kk++){
+    // 标签均匀分布
+    for(var kk=0;kk<5;kk++){
       var tX=pos(r.div/(rateVals[kk]/100));
       svg+='<line x1="'+tX.toFixed(2)+'%" y1="'+(segTop-2)+'" x2="'+tX.toFixed(2)+'%" y2="'+(segBot+2)+'" stroke="'+txtColors[kk]+'" stroke-width="1.2"/>';
-      // 奇数下标标签在上，偶数在下，避免拥挤
-      var lY=segBot+14; if(kk%2===0)lY=segBot+14; else lY=segBot+26;
-      svg+='<text x="'+tX.toFixed(2)+'%" y="'+lY+'" font-size="10" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
-      svg+='<text x="'+tX.toFixed(2)+'%" y="'+(lY+12)+'" font-size="9" fill="#8b92a0" text-anchor="middle">'+(r.div/(rateVals[kk]/100)).toFixed(1)+'</text>';
+      var lY=segBot+14;
+      svg+='<text x="'+tX.toFixed(2)+'%" y="'+lY+'" font-size="11" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
+      svg+='<text x="'+tX.toFixed(2)+'%" y="'+(lY+12)+'" font-size="10" fill="#8b92a0" text-anchor="middle">'+(r.div/(rateVals[kk]/100)).toFixed(1)+'</text>';
     }
     // 大号倒三角+标签
     var curPct=pos(r.price);
-    var lbW=8,lbX=Math.max(2,Math.min(100-lbW,curPct-lbW/2));
-    svg+='<polygon points="'+(curPct-2.5)+'%,6 '+(curPct+2.5)+'%,6 '+curPct.toFixed(2)+'%,16" fill="#e74c3c"/>';
-    svg+='<polygon points="'+(curPct-1.5)+'%,6 '+(curPct+1.5)+'%,6 '+curPct.toFixed(2)+'%,12" fill="#fff"/>';
-    svg+='<rect x="'+lbX.toFixed(2)+'%" y="18" width="'+lbW.toFixed(2)+'%" height="16" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="2"/>';
-    svg+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="29" font-size="10" font-weight="800" fill="#e74c3c" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
+    var lbW=10,lbX=Math.max(2,Math.min(100-lbW,curPct-lbW/2));
+    svg+='<polygon points="'+(curPct-3)+'%,4 '+(curPct+3)+'%,4 '+curPct.toFixed(2)+'%,16" fill="#e74c3c"/>';
+    svg+='<polygon points="'+(curPct-2)+'%,4 '+(curPct+2)+'%,4 '+curPct.toFixed(2)+'%,12" fill="#fff"/>';
+    svg+='<rect x="'+lbX.toFixed(2)+'%" y="18" width="'+lbW.toFixed(2)+'%" height="18" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="2.5"/>';
+    svg+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="30" font-size="11" font-weight="800" fill="#e74c3c" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
     svg+='<line x1="'+curPct.toFixed(2)+'%" y1="16" x2="'+curPct.toFixed(2)+'%" y2="'+(segTop-1)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="3,3"/>';
     svg+='</svg>';
 
@@ -338,7 +370,15 @@ function renderAll(){
         '<div class="m"><span class="k">市值</span><span class="v">'+r.mcap.toFixed(0)+'亿</span></div>'+
       '</div></div>'+
       (bars?'<div class="dl-section"><h4>📊 营收 & 净利（亿）</h4><div class="trend-legend"><span class="dot" style="background:#5dade2"></span>营收 <span class="dot" style="background:#e67e22;margin-left:10px"></span>净利</div>'+bars+'</div>':'')+
-      '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+svg+'</div>'+
+      '<div class="dl-section"><h4>💰 现金流（亿）</h4>'+(r.cfo?'<div class="mg">'+
+        '<div class="m"><span class="k">经营现金流</span><span class="v">'+r.cfo+'</span></div>'+
+        '<div class="m"><span class="k">自由现金流</span><span class="v">'+r.fcf+'</span></div>'+
+        '<div class="m"><span class="k">现金/分红倍数</span><span class="v">'+r.cov+'倍</span></div>'+
+        '<div class="m"><span class="k">安全评价</span><span class="v">'+r.safe+'</span></div>'+
+      '</div></div>':'')+
+      '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+svg+
+      '<div style="margin-top:6px;padding:8px;background:#f8f9fa;border-radius:6px;font-size:11px"><b>当前股息率 '+r.divR.toFixed(2)+'%</b> · 买入建议：'+(r.buyBuy||'¥'+r.buy.toFixed(1))+'（股息率 '+((r.div/r.buy)*100).toFixed(2)+'%） · 距离理想买点：'+(r.needy>0?'高于¥'+r.needy.toFixed(2):'低于¥'+Math.abs(r.needy).toFixed(2)+' ✅')+'</div></div>'+
+      '<div class="dl-section"><h4>📈 分红趋势（每股/元）</h4>'+(r.divHist&&r.divHist.length>1?buildDivTrend(r.divHist):'<div style="color:var(--sub)">数据不足</div>')+'</div>'+
       '<div class="dl-section"><h4>💵 近五年每股分红</h4><div class="hist">'+(r.divHist||[]).map(function(v,i){return'<span>'+(i?'→ ':'')+'¥'+v+'</span>'}).join('')+'</div></div>'+
       '<div class="dl-section"><h4>📅 事件</h4><div class="dates-row"><span>📊 财报：'+(r.earn||'—')+'</span><span>💵 分红：'+(r.divDt||'—')+'</span></div></div>'+
     '</div></div>';
