@@ -251,24 +251,30 @@ function renderAll(){
     function pos(p){return Math.max(1,Math.min(99,(p-axesMin)/(axesMax-axesMin)*100))}
     var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#ffe0c0','#fde8e8'];
     var txtColors=['#27ae60','#27ae60','#7fb069','#e5b800','#e67e22','#e74c3c'];
-    var svg='<svg class="divseg-svg" viewBox="0 0 400 100">';
+    var svg='<svg class="divseg-svg" viewBox="0 0 400 110">'; var segTop=28,segH=26,segBot=segTop+segH;
     for(var kk=0;kk<6;kk++){
       var lP=pos(r.div/(rateVals[kk]/100));
       var rP=kk<5?pos(r.div/(rateVals[kk+1]/100)):99;
-      svg+='<rect x="'+lP.toFixed(2)+'%" y="26" width="'+(rP-lP).toFixed(2)+'%" height="26" fill="'+segColors[kk]+'" rx="3"/>';
+      var segX=lP, segW=Math.max(2,rP-segX);
+      svg+='<rect x="'+segX.toFixed(2)+'%" y="'+segTop+'" width="'+segW.toFixed(2)+'%" height="'+segH+'" fill="'+segColors[kk]+'" rx="3"/>';
     }
+    // 标签错开上下避免重叠
     for(var kk=0;kk<6;kk++){
       var tX=pos(r.div/(rateVals[kk]/100));
-      svg+='<line x1="'+tX.toFixed(2)+'%" y1="23" x2="'+tX.toFixed(2)+'%" y2="55" stroke="'+txtColors[kk]+'" stroke-width="1.2"/>';
-      svg+='<text x="'+tX.toFixed(2)+'%" y="64" font-size="11" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
-      svg+='<text x="'+tX.toFixed(2)+'%" y="76" font-size="10" fill="#8b92a0" text-anchor="middle">'+(r.div/(rateVals[kk]/100)).toFixed(1)+'</text>';
+      svg+='<line x1="'+tX.toFixed(2)+'%" y1="'+(segTop-2)+'" x2="'+tX.toFixed(2)+'%" y2="'+(segBot+2)+'" stroke="'+txtColors[kk]+'" stroke-width="1.2"/>';
+      // 奇数下标标签在上，偶数在下，避免拥挤
+      var lY=segBot+14; if(kk%2===0)lY=segBot+14; else lY=segBot+26;
+      svg+='<text x="'+tX.toFixed(2)+'%" y="'+lY+'" font-size="10" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
+      svg+='<text x="'+tX.toFixed(2)+'%" y="'+(lY+12)+'" font-size="9" fill="#8b92a0" text-anchor="middle">'+(r.div/(rateVals[kk]/100)).toFixed(1)+'</text>';
     }
+    // 大号倒三角+标签
     var curPct=pos(r.price);
-    var lbW=7,lbX=Math.max(2,Math.min(100-lbW,curPct-lbW/2));
-    svg+='<polygon points="'+(curPct-1.2)+'%,16 '+(curPct+1.2)+'%,16 '+curPct.toFixed(2)+'%,22" fill="#e74c3c"/>';
-    svg+='<rect x="'+lbX.toFixed(2)+'%" y="2" width="'+lbW.toFixed(2)+'%" height="14" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="1.5"/>';
-    svg+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="12" font-size="10" font-weight="800" fill="#e74c3c" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
-    svg+='<line x1="'+curPct.toFixed(2)+'%" y1="22" x2="'+curPct.toFixed(2)+'%" y2="25" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="2,3"/>';
+    var lbW=8,lbX=Math.max(2,Math.min(100-lbW,curPct-lbW/2));
+    svg+='<polygon points="'+(curPct-2.5)+'%,6 '+(curPct+2.5)+'%,6 '+curPct.toFixed(2)+'%,16" fill="#e74c3c"/>';
+    svg+='<polygon points="'+(curPct-1.5)+'%,6 '+(curPct+1.5)+'%,6 '+curPct.toFixed(2)+'%,12" fill="#fff"/>';
+    svg+='<rect x="'+lbX.toFixed(2)+'%" y="18" width="'+lbW.toFixed(2)+'%" height="16" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="2"/>';
+    svg+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="29" font-size="10" font-weight="800" fill="#e74c3c" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
+    svg+='<line x1="'+curPct.toFixed(2)+'%" y1="16" x2="'+curPct.toFixed(2)+'%" y2="'+(segTop-1)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="3,3"/>';
     svg+='</svg>';
 
     // 营收净利组合图 SVG
@@ -290,9 +296,9 @@ function renderAll(){
       for(var bi=0;bi<5;bi++){
         var bx=padL+(bi+0.5)*(chartW/5)-barW/2;
         var bh=Math.max(2,(rev[bi]/rMax)*chartH);
-        bars+='<rect x="'+bx.toFixed(1)+'" y="'+(padT+chartH-bh).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+bh.toFixed(1)+'" fill="#5dade2" rx="2"/>';
+        bars+='<rect x="'+bx.toFixed(1)+'" y="'+(padT+chartH-bh).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+bh.toFixed(1)+'" fill="none" stroke="#5dade2" stroke-width="1.5" rx="2"/>';
         var revStr=rev[bi]>=10000?(rev[bi]/10000).toFixed(1)+'万':String(rev[bi]);
-        bars+='<text x="'+(bx+barW/2).toFixed(1)+'" y="'+(padT+chartH-bh-3).toFixed(1)+'" font-size="7" fill="#2980b9" text-anchor="middle" font-weight="600">'+revStr+'</text>';
+        bars+='<text x="'+(bx+barW/2).toFixed(1)+'" y="'+(padT+chartH-bh-4).toFixed(1)+'" font-size="7" fill="#333" text-anchor="middle" font-weight="600">'+revStr+'</text>';
       }
       var pts=[],npPos=[];
       for(var bi=0;bi<5;bi++){
