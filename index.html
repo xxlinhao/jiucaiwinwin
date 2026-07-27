@@ -37,7 +37,7 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .tag-d{background:#fff3e0;color:#e67e22}
 .tag-c{background:#e8f0fe;color:#2980b9}
 .tag-b{background:#f3e5f5;color:#8e44ad}
-.adv{font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px}
+.adv{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0}
 .a-buy{background:#e8f5e9;color:#1e8449}
 .a-wait{background:#fff8e0;color:#b8860b}
 .a-nop{background:#f0f2f5;color:var(--sub)}
@@ -183,10 +183,10 @@ function divColor(d){if(d<5)return'var(--red)';if(d<5.3)return'var(--orange)';if
 function divBarPct(d){if(d<=4)return 0;if(d>=6)return 100;return(d-4)/2*100}
 
 function advice(dist,divR){
-  if(dist<0)return{text:'✅ 加仓',cls:'a-buy'};
-  if(dist<=3&&divR>=5.3)return{text:'👀 等回踩',cls:'a-wait'};
-  if(dist<=7&&divR>=5)return{text:'⏳ 观察',cls:'a-wait'};
-  return{text:'🚫 不操作',cls:'a-nop'};
+  if(dist<0)return{text:'✅加仓',cls:'a-buy'};
+  if(dist<=3&&divR>=5.3)return{text:'👀等回踩',cls:'a-wait'};
+  if(dist<=7&&divR>=5)return{text:'⏳观察',cls:'a-wait'};
+  return{text:'🚫不动',cls:'a-nop'};
 }
 
 async function load(){
