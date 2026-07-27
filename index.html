@@ -73,21 +73,8 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .div-table .col-price{font-weight:600}
 .div-table tr.current td{background:#fff0f0;font-weight:700;color:var(--red)}
 /* 目标价横向条 */
-/* 分段目标价条 */
-.divseg-wrap{padding:20px 4px 24px;position:relative}
-.divseg-cur{position:absolute;top:0;font-size:11px;font-weight:700;color:var(--red);text-align:center;transform:translateX(-50%);white-space:nowrap;background:#fff;padding:0 4px;z-index:2}
-.divseg-cur::after{content:'';display:block;width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid var(--red);margin:0 auto}
-.divseg-bar{display:flex;height:20px;border-radius:5px;gap:2px;position:relative}
-.divseg-seg{flex:1;position:relative;min-width:0;border-radius:3px}
-.divseg-seg:nth-child(1){background:#d0f0d8}
-.divseg-seg:nth-child(2){background:#c8eccf}
-.divseg-seg:nth-child(3){background:#e8f5e0}
-.divseg-seg:nth-child(4){background:#fff8d0}
-.divseg-seg:nth-child(5){background:#ffe0c0}
-.divseg-seg:nth-child(6){background:#fde8e8}
-.divseg-rate{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;white-space:nowrap}
-.divseg-price{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--sub);white-space:nowrap}
-.divseg-tick{position:absolute;top:0;bottom:0;width:1px;background:rgba(0,0,0,.15)}
+/* 分段目标价条（SVG） */
+.divseg-svg{width:100%;display:block;margin:10px 0}
 .hist{display:flex;gap:3px;font-size:10px;color:var(--sub);flex-wrap:wrap}
 .hist span{background:#f0f2f5;padding:2px 5px;border-radius:3px}
 .dates-row{display:flex;gap:12px;font-size:11px;color:var(--sub);padding:4px 0}
@@ -237,21 +224,42 @@ function renderAll(){
     priceBound.sort(function(a,b){return a-b;});
     var pMin=priceBound[0],pMax=priceBound[priceBound.length-1];
     var segHTML='';
-    for(var sk=0;sk<rateNodes.length;sk++){
-      var leftP=Math.max(pMin,r.div/(rateNodes[sk].rate/100));
-      var rightP=sk<rateNodes.length-1?r.div/(rateNodes[sk+1].rate/100):pMax*1.05;
-      var leftPos=(leftP-pMin)/(pMax-pMin)*100;
-      var rightPos=(Math.min(pMax*1.05,rightP)-pMin)/(pMax-pMin)*100;
-      var w=Math.max(3,rightPos-leftPos);
-      var priceAtRate=r.div/(rateNodes[sk].rate/100);
-      segHTML+='<div class="divseg-seg" style="left:'+leftPos.toFixed(1)+'%;width:'+w.toFixed(1)+'%"><div class="divseg-rate" style="color:'+rateNodes[sk].color2+'">'+rateNodes[sk].rate.toFixed(1)+'%</div><div class="divseg-price">¥'+priceAtRate.toFixed(2)+'</div></div>';
+    // 单个 SVG 把整个分段条、刻度、标签、当前价位置都画出来
+    // 横轴价格范围：min(pMin,pMin*0.95) 到 max(pMax,pMax*1.05)
+    var leftMargin=r.div/0.07, rightMargin=r.div/0.035; // 7% 到 3.5% 范围
+    var axisMin=Math.min(leftMargin,pMin*0.9), axisMax=Math.max(rightMargin,pMax*1.1);
+    function pos(price){return Math.max(0,Math.min(100,(price-axisMin)/(axisMax-axisMin)*100))}
+    var sw=380,sh=90;
+    var segTop=22,segHeight=22,segBottom=segTop+segHeight;
+    var labelTop=segBottom+14,labelBottom=labelTop+14;
+    segHTML+='<svg class="divseg-svg" viewBox="0 0 '+sw+' '+sh+'">';
+    // 6 个分段
+    var rateVals=[6,5.5,5.3,5,4.5,4];
+    var rateColors=['#27ae60','#27ae60','#7fb069','#e5b800','#e67e22','#e74c3c'];
+    var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#ffe0c0','#fde8e8'];
+    // 分段绘制（rate=6 在最左，rate=4 在最右，价格递增）
+    var lastP=pos(r.div/0.07);
+    for(var kk=0;kk<6;kk++){
+      var curP=pos(r.div/(rateVals[kk]/100));
+      var nextP=kk<5?pos(r.div/(rateVals[kk+1]/100)):pos(axisMax);
+      var segX=Math.max(curP,0), segW=Math.max(nextP-curP,3);
+      segHTML+='<rect x="'+segX.toFixed(2)+'%" y="'+segTop+'" width="'+segW.toFixed(2)+'%" height="'+segHeight+'" fill="'+segColors[kk]+'" rx="2"/>';
     }
-    var curSeg=0;
-    if(r.price<=pMin)curSeg=0;
-    else if(r.price>=pMax)curSeg=rateNodes.length-1;
-    else curSeg=Math.floor((r.price-pMin)/(pMax-pMin)*rateNodes.length);
-    var curPct=(r.price-pMin)/(pMax-pMin)*100;
-    curPct=Math.max(0,Math.min(100,curPct));
+    // 6 个刻度（边界处），下方标 股息率 + 股价
+    for(var kk=0;kk<6;kk++){
+      var tickX=pos(r.div/(rateVals[kk]/100));
+      var tickColor=rateColors[kk];
+      segHTML+='<line x1="'+tickX.toFixed(2)+'%" y1="'+(segTop-3)+'" x2="'+tickX.toFixed(2)+'%" y2="'+(segBottom+3)+'" stroke="'+tickColor+'" stroke-width="1" opacity=".5"/>';
+      // 标签放刻度正下方
+      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelTop+'" font-size="10" font-weight="700" fill="'+tickColor+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
+      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelBottom+'" font-size="9" fill="#8b92a0" text-anchor="middle">¥'+(r.div/(rateVals[kk]/100)).toFixed(2)+'</text>';
+    }
+    // 当前价倒三角 + 标签
+    var curPctPos=pos(r.price);
+    segHTML+='<polygon points="'+(curPctPos-1.2)+'%,18 '+(curPctPos+1.2)+'%,18 '+curPctPos.toFixed(2)+'%,22" fill="#e74c3c"/>';
+    segHTML+='<rect x="'+(curPctPos-12)+'%" y="2" width="24%" height="14" rx="2" fill="#fff" stroke="#e74c3c" stroke-width="1"/>';
+    segHTML+='<text x="'+curPctPos.toFixed(2)+'%" y="12" font-size="10" font-weight="700" fill="#e74c3c" text-anchor="middle">¥'+r.price.toFixed(2)+'</text>';
+    segHTML+='</svg>';
     // 营收/利润
     var rev=null,np=null;
     if(r.code==='600036'){rev=[3313,3448,3391,3375,3300];np=[1200,1380,1466,1484,1502];}
@@ -309,7 +317,7 @@ function renderAll(){
   '<div class="dl-section"><h4>📈 估值与业绩趋势</h4><div class="mgrid"><div class="m"><span class="k">PE</span><span class="kv">'+r.pe.toFixed(1)+'</span></div><div class="m"><span class="k">PB</span><span class="kv">'+r.pb.toFixed(2)+'</span></div><div class="m"><span class="k">ROE</span><span class="kv">'+r.roe.toFixed(1)+'%</span></div><div class="m"><span class="k">市值</span><span class="kv">'+r.mcap.toFixed(0)+'亿</span></div></div>'+
   (bars?'<div style="font-size:10px;color:var(--sub);margin-top:6px"><span style="color:#2980b9">■ 营收</span> <span style="color:#e67e22;margin-left:8px">■ 净利</span>（亿元）</div><div class="trend-bars">'+bars+'</div>':'')+'</div>'+
   '<div class="dl-section"><h4>💵 近五年每股分红</h4><div class="hist">'+histStr+'</div></div>'+
-  '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div><div class="divseg-wrap"><div class="divseg-cur" style="left:'+curPct.toFixed(1)+'%">¥'+r.price.toFixed(2)+'</div><div class="divseg-bar">'+segHTML+'</div></div></div>'+
+  '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+segHTML+'</div>'+
   '<div class="dl-section"><h4>📊 各股息率对应价格明细</h4><table class="div-table"><tr><td class="col-rate">股息率</td><td class="col-rate">对应股价</td><td class="col-rate">距现价</td></tr>'+nodeRows+'</table></div>'+
   '<div class="dl-section"><h4>📅 事件提醒</h4><div class="dates-row"><span>📊 财报：'+(r.earn||'—')+'</span><span>💵 分红：'+(r.divDt||'—')+'</span></div></div>'+
 '</div></div>'
