@@ -410,13 +410,12 @@ function toggleAcc(el){
   el.classList.toggle('open');
 }
 
-}catch(e){
-  // script 解析阶段出错会落在这里
-  document.body.innerHTML='<div class="errbox">⚠️ 脚本错误：'+e.message+'<br><br>'+e.stack+'</div>';
-}
+// 立即执行首次加载 + 每分钟刷新
+load();
+setInterval(load,60000);
 
-try{load();setInterval(load,60000);}catch(e){
-  document.getElementById('time').textContent='加载失败：'+e.message;
+}catch(e){
+  document.body.innerHTML='<div class="errbox">⚠️ 脚本错误：'+e.message+'<br><br>'+e.stack+'</div>';
 }
 </script>
 </body>
