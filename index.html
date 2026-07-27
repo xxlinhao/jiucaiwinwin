@@ -50,6 +50,10 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .acc-head.open .arrow{transform:rotate(180deg)}
 .acc-body{display:none;padding:0 4px 16px}
 .acc-body.show{display:block}
+/* 折线柱状组合图 */
+.trend-svg{width:100%;height:90px;margin-top:6px;display:block}
+.trend-legend{font-size:9px;color:var(--sub);margin-top:4px}
+.trend-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:middle}
 .dl-section{margin-bottom:10px}
 .dl-section h4{font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid #f0f2f5}
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px}
@@ -61,12 +65,13 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .trend-bar .rev{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(#2980b9,#58a6ff);min-height:2px}
 .trend-bar .np{width:65%;margin:1px auto 0;border-radius:3px 3px 0 0;background:linear-gradient(#e67e22,#f0a040);min-height:2px}
 .trend-bar .yr{font-size:9px;margin-top:2px}
-/* 股息率节点表 */
-.div-table{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0}
-.div-table td{padding:5px 4px;text-align:center;border-bottom:1px solid #f0f2f5}
-.div-table tr.current td{color:var(--red);font-weight:700;font-size:12px}
-.div-table tr.current td:first-child{background:#fff0f0;border-radius:4px 0 0 4px}
-.div-table tr.current td:last-child{background:#fff0f0;border-radius:0 4px 4px 0}
+/* 股息率节点表（横向） */
+.div-table{width:100%;border-collapse:collapse;font-size:10px;margin:6px 0;table-layout:fixed}
+.div-table th{font-size:9px;color:var(--sub);font-weight:400;padding:4px 2px;border-bottom:1px solid #f0f2f5;text-align:center}
+.div-table td{padding:6px 2px;text-align:center;border-bottom:1px solid #f8f9fb;font-size:11px}
+.div-table .col-rate{color:var(--sub);font-size:9px}
+.div-table .col-price{font-weight:600}
+.div-table tr.current td{background:#fff0f0;font-weight:700;color:var(--red)}
 /* 目标价横向条 */
 .price-range{position:relative;height:36px;margin:8px 0;border-radius:4px;overflow:hidden}
 .price-range .bg{position:absolute;width:100%;height:100%;border-radius:4px;background:linear-gradient(90deg,#d0f0d8 0%,#fff8d0 50%,#fde8e8 100%)}
@@ -98,10 +103,10 @@ footer{text-align:center;padding:16px;font-size:10px;color:var(--sub)}
 <header><h1>🥬 韭菜WinWin</h1><div class="st">股息率价值投资 · 今日判断</div></header>
 <div class="refresh-bar" onclick="load()"><span id="time">点击刷新数据</span> 🔄</div>
 <div class="tabs">
-  <button class="on" onclick="switchTab(this,'dash')">🏠 首页</button>
-  <button onclick="switchTab(this,'detail')">🔍 个股</button>
-  <button onclick="switchTab(this,'divcenter')">💰 分红中心</button>
-  <button onclick="switchTab(this,'opp')">⭐ 机会</button>
+  <button class="on" data-tab="dash" onclick="switchTab(this,'dash')">🏠 首页</button>
+  <button data-tab="detail" onclick="switchTab(this,'detail')">🔍 个股</button>
+  <button data-tab="divcenter" onclick="switchTab(this,'divcenter')">💰 分红中心</button>
+  <button data-tab="opp" onclick="switchTab(this,'opp')">⭐ 机会</button>
 </div>
 <div id="dash"></div><div id="detail" class="hidden"></div><div id="divcenter" class="hidden"></div><div id="opp" class="hidden"></div>
 <footer>东方财富API · 价值投资观察站</footer>
@@ -170,6 +175,14 @@ async function load(){
 }
 
 function renderAll(){
+  // 记录当前打开的面板和当前 tab，重渲染后恢复
+  var openIdx=[];
+  document.querySelectorAll('.acc-head.open').forEach(function(el){
+    var idx=parseInt(el.parentNode.getAttribute('data-idx')||-1);
+    if(idx>=0)openIdx.push(idx);
+  });
+  var activeTab=document.querySelector('.tabs button.on');
+  var activeTabId=activeTab?activeTab.getAttribute('data-tab'):'dash';
   // ═══ 首页 ═══
   var dash=[];var ann=Math.round(calcTotal(getAnn));
   dash.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
@@ -196,19 +209,20 @@ function renderAll(){
   var sel='<div style="margin-bottom:12px;font-size:11px;color:var(--sub)">点击股票行展开查看详细数据</div>';
   for(var i=0;i<data.length;i++){
     var r=data[i];
-    if(!r.ok){detail.push('<div class="acc-item"><div class="acc-head"><span class="name">'+r.name+'</span><span style="font-size:11px;color:var(--sub)">加载中...</span><span class="arrow">▼</span></div></div>');continue;}
+    if(!r.ok){detail.push('<div class="acc-item" data-idx="'+i+'"><div class="acc-head"><span class="name">'+r.name+'</span><span style="font-size:11px;color:var(--sub)">加载中...</span><span class="arrow">▼</span></div></div>');continue;}
     var up=r.chg>0;var lvl=divLevel(r.divR);var clr=divColor(r.divR);
     var pct=divBarPct(r.divR);
-    // 股息率节点表
+    // 股息率节点表（横向布局，公式：股价 = 每股分红 / 股息率）
     var nodes=[6,5.5,5.3,5,4.5,4];
-    var nodeRows='';
+    var nodeRows='<tr style="background:#f8f9fb"><td class="col-rate">股息率</td><td class="col-rate">对应股价</td><td class="col-rate">差值</td></tr>';
     for(var ni=0;ni<nodes.length;ni++){
-      var np=Math.round(r.div/nodes[ni]*100)/100;
-      var isCur=Math.abs(r.price-np)<0.5;
-      nodeRows+='<tr'+(isCur?' class="current"':'')+'><td>'+nodes[ni].toFixed(1)+'%</td><td>¥'+np.toFixed(2)+'</td><td>'+(r.price>=np?'高于节点 ↑':'低于节点 ↓')+'</td></tr>';
+      var np=Math.round(r.div/(nodes[ni]/100)*100)/100;
+      var diff=r.price-np;
+      var isCur=Math.abs(diff)<0.5;
+      nodeRows+='<tr'+(isCur?' class="current"':'')+'><td class="col-rate">'+nodes[ni].toFixed(1)+'%</td><td class="col-price">¥'+np.toFixed(2)+'</td><td>'+(diff>=0?'+':'')+diff.toFixed(2)+'</td></tr>';
     }
     // 价格区间
-    var lo=Math.round(r.div/6*100)/100, hi=Math.round(r.div/4*100)/100;
+    var lo=Math.round(r.div/0.06*100)/100, hi=Math.round(r.div/0.04*100)/100;
     var cpos=Math.max(0,Math.min(100,(r.price-lo)/(hi-lo)*100));
     // 营收/利润
     var rev=null,np=null;
@@ -220,15 +234,49 @@ function renderAll(){
     if(rev&&np){
       var rMax=Math.max.apply(null,rev),nMax=Math.max.apply(null,np);
       var yrs=['21','22','23','24','25'];
-      for(var bi=0;bi<5;bi++)bars+='<div class="trend-bar"><div class="rev" style="height:'+(rev[bi]/rMax*60)+'px"></div><div class="np" style="height:'+(np[bi]/nMax*28)+'px"></div><div class="yr">'+yrs[bi]+'</div></div>';
+      // SVG 柱状+折线 组合图
+      var w=320,h=80,padL=30,padR=8,padT=6,padB=18;
+      var chartW=w-padL-padR,chartH=h-padT-padB;
+      var barW=chartW/5*0.55;
+      var svg='<svg class="trend-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">';
+      // 背景网格
+      var yMid=padT+chartH*0.6;
+      svg+='<line x1="'+padL+'" y1="'+yMid+'" x2="'+(w-padR)+'" y2="'+yMid+'" stroke="#f0f2f5" stroke-width="0.5"/>';
+      // 柱状（营收）
+      for(var bi=0;bi<5;bi++){
+        var bx=padL+(bi+0.5)*(chartW/5)-barW/2;
+        var bh=Math.max(2,(rev[bi]/rMax)*chartH);
+        svg+='<rect x="'+bx.toFixed(1)+'" y="'+(padT+chartH-bh).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+bh.toFixed(1)+'" fill="#2980b9" rx="2"/>';
+      }
+      // 折线（净利）
+      var pts=[];
+      for(var bi=0;bi<5;bi++){
+        var px=padL+(bi+0.5)*(chartW/5);
+        var py=padT+chartH-(np[bi]/nMax)*chartH*0.7;
+        pts.push(px+','+py);
+      }
+      svg+='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#e67e22" stroke-width="2"/>';
+      for(var bi=0;bi<5;bi++){
+        var px=padL+(bi+0.5)*(chartW/5);
+        var py=padT+chartH-(np[bi]/nMax)*chartH*0.7;
+        svg+='<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="3" fill="#e67e22"/>';
+      }
+      // 年份标签
+      for(var bi=0;bi<5;bi++){
+        var lx=padL+(bi+0.5)*(chartW/5);
+        svg+='<text x="'+lx.toFixed(1)+'" y="'+(h-4)+'" font-size="9" fill="#8b92a0" text-anchor="middle">'+yrs[bi]+'</text>';
+      }
+      svg+='</svg>';
+      bars=svg;
     }
     // 分红历史
     var histStr='';var hist=r.divHist||[];for(var j=0;j<hist.length;j++)histStr+='<span>'+(j?'→ ':'')+'¥'+hist[j]+'</span>';
-    var nudge='';if(r.needy>0)nudge='高于补仓价 ¥'+r.needy.toFixed(2);else if(r.needy===0)nudge='等于补仓价';else nudge='低于补仓价 ¥'+Math.abs(r.needy).toFixed(2)+' ✅';
-    var adviceStr=r.dist<=5?'可关注':r.needy<0?'已进入补仓区':'观望';
+    // needy = buy - price，正值=当前价低于补仓价(好)，负值=当前价高于补仓价(贵)
+    var nudge='';if(r.needy>0)nudge='低于补仓价 ¥'+r.needy.toFixed(2)+' ✅ 可加仓';else if(r.needy<0)nudge='高于补仓价 ¥'+Math.abs(r.needy).toFixed(2);else nudge='等于补仓价';
+    var adviceStr=r.needy>0?'已进入补仓区':r.dist<=5?'接近目标':'观望';
 
     detail.push(
-'<div class="acc-item"><div class="acc-head" onclick="toggleAcc(this)"><span class="name"><span style="font-size:12px;font-weight:400;color:var(--sub);margin-right:4px">'+(i+1)+'</span>'+r.name+'</span><span class="price">¥'+r.price.toFixed(2)+'</span><span class="chg '+(up?'chg-up':'chg-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span><span class="arrow">▼</span></div>'+
+'<div class="acc-item" data-idx="'+i+'"><div class="acc-head" onclick="toggleAcc(this)"><span class="name"><span style="font-size:12px;font-weight:400;color:var(--sub);margin-right:4px">'+(i+1)+'</span>'+r.name+'</span><span class="price">¥'+r.price.toFixed(2)+'</span><span class="chg '+(up?'chg-up':'chg-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span><span class="arrow">▼</span></div>'+
 '<div class="acc-body">'+
   '<div class="dl-section"><h4>📈 估值与业绩趋势</h4><div class="mgrid"><div class="m"><span class="k">PE</span><span class="kv">'+r.pe.toFixed(1)+'</span></div><div class="m"><span class="k">PB</span><span class="kv">'+r.pb.toFixed(2)+'</span></div><div class="m"><span class="k">ROE</span><span class="kv">'+r.roe.toFixed(1)+'%</span></div><div class="m"><span class="k">市值</span><span class="kv">'+r.mcap.toFixed(0)+'亿</span></div></div>'+
   (bars?'<div style="font-size:10px;color:var(--sub);margin-top:6px"><span style="color:#2980b9">■ 营收</span> <span style="color:#e67e22;margin-left:8px">■ 净利</span>（亿元）</div><div class="trend-bars">'+bars+'</div>':'')+'</div>'+
@@ -262,6 +310,19 @@ function renderAll(){
     opps.push('<div class="opp-card"><span style="font-weight:700;min-width:24px">'+(i+1)+'.</span><div><div style="font-size:12px;font-weight:600">'+r.name+'</div><div style="font-size:10px;color:var(--sub)">¥'+r.price.toFixed(2)+' → ¥'+r.buy+' · '+needStr+'</div></div><div style="text-align:right"><div class="opp-stars">'+stars+'</div><div style="font-size:11px;font-weight:700;color:'+clr+'">'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</div></div></div>');
   }
   document.getElementById('opp').innerHTML=opps.join('')||'<div style="text-align:center;padding:20px;color:var(--sub)">暂无数据</div>';
+
+  // 恢复展开状态
+  openIdx.forEach(function(idx){
+    var el=document.querySelector('[data-idx="'+idx+'"] .acc-head');
+    if(el){el.classList.add('open');var body=el.nextElementSibling;if(body)body.classList.add('show');}
+  });
+  // 恢复tab
+  if(activeTabId){
+    document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
+    var at=document.querySelector('.tabs button[data-tab="'+activeTabId+'"]');if(at)at.classList.add('on');
+    ['dash','detail','divcenter','opp'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
+    var e=document.getElementById(activeTabId);if(e)e.classList.remove('hidden');
+  }
 }
 
 function onShareChange(code,val){shares[code]=parseInt(val)||0;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}document.getElementById('o_'+code).textContent='¥'+Math.round(getAnn(code));var ann=Math.round(calcTotal(getAnn));var totalEl=document.getElementById('simT');if(totalEl)totalEl.textContent='¥'+ann.toLocaleString()}
