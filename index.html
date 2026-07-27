@@ -255,7 +255,11 @@ function renderAll(){
       '<div class="dc-p">¥'+r.price.toFixed(2)+' <span class="chip '+(up?'chip-up':'chip-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span></div>'+
       '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-top:3px"><span>股息率</span><b style="color:'+clr+'">'+r.divR.toFixed(2)+'%</b></div>'+
       '<div class="bar-track" style="height:4px"><div class="bar-fill" style="width:'+pct+'%;background:'+clr+'"></div><div class="bar-dot" style="left:'+pct+'%;background:'+clr+'"></div></div>'+
-      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-top:3px"><span>距目标</span><b>'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</b></div>'+
+      '<div style="font-size:10px;color:var(--sub);margin-top:4px">'+
+        (Math.abs(r.needy)<0.5?'<span style="color:var(--green);font-weight:700">🎯 目标价范围内</span>':(
+          r.needy>0?'<span style="color:#2980b9;font-weight:700">低于目标价 ¥'+r.needy.toFixed(2)+'</span>':
+          '<span style="color:var(--red);font-weight:700">高于目标价 ¥'+Math.abs(r.needy).toFixed(2)+'</span>'
+        ))+'</div></div>';
     '</div>';
   }
   dash+='</div>';
