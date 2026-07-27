@@ -85,6 +85,13 @@ header .st{font-size:10px;color:var(--sub);margin-top:1px}
 .opp-stars{color:#f1c40f;font-size:10px;letter-spacing:2px;margin-left:4px}
 .cal-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px}
 .cal-row .hot{background:#fde8e8;color:var(--red);padding:1px 7px;border-radius:4px;font-size:9px;font-weight:600}
+.divcal{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+.divcal th{font-size:10px;color:var(--sub);font-weight:400;padding:6px 4px;border-bottom:1px solid var(--border);background:#f8f9fa}
+.divcal td{padding:8px 4px;border-bottom:1px solid #f0f2f5;font-size:11px;vertical-align:middle}
+.stepper{display:inline-flex;align-items:center;gap:2px}
+.stepper button{width:22px;height:22px;border:1px solid var(--border);background:var(--bg);border-radius:4px;cursor:pointer;font-weight:700;color:var(--text)}
+.stepper button:active{background:var(--blue);color:#fff}
+.stepper input{width:55px;padding:3px 4px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--text);text-align:center;font-size:12px;font-weight:600}
 .btn-refresh{display:block;width:100%;padding:10px;margin-bottom:14px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--blue);font-size:12px;font-weight:600;cursor:pointer}
 .hidden{display:none}
 footer{text-align:center;padding:14px 10px;font-size:10px;color:var(--sub)}
@@ -94,7 +101,6 @@ footer{text-align:center;padding:14px 10px;font-size:10px;color:var(--sub)}
 <body>
 <header>
 <h1>🥬 韭菜WinWin</h1>
-<div class="st">股息率价值投资 · 今日判断</div>
 <div class="refresh-bar" onclick="load()"><span id="time">点击刷新获取实时数据</span> 🔄</div>
 </header>
 
@@ -214,7 +220,7 @@ async function load(){
     data.push(row);
   }
   renderAll();
-  document.getElementById('time').textContent='🟢 '+new Date().toLocaleTimeString('zh-CN');
+  document.getElementById('time').textContent='🟢 '+new Date().toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 function showErr(e){
@@ -388,16 +394,39 @@ function renderAll(){
   document.getElementById('detail').innerHTML=detail;
 
   // ═══ 分红中心 ═══
-  var divs='<div class="sim-detail">'+
-    '<div class="sd"><div style="color:var(--sub);font-size:10px">年分红</div><div class="n">¥'+ann.toLocaleString()+'</div></div>'+
-    '<div class="sd"><div style="color:var(--sub);font-size:10px">月均</div><div class="n">¥'+(ann/12).toFixed(0)+'</div></div></div>'+
-    '<div style="font-size:12px;color:var(--sub);margin-bottom:8px">输入持股数，自动计算年度分红</div>';
+  // 表格：股票名 | 目标股数(+-100/输入) | 预计成本 | 每股分红 | 预估分红
+  var totalCost=0,totalDiv=0,totalShares=0;
+  var divs='<div class="panel"><h2>📊 分红计算器</h2>'+
+    '<table class="divcal"><tr><th>股票</th><th style="text-align:right">目标股数</th><th style="text-align:right">预计成本</th><th style="text-align:right">每股分红</th><th style="text-align:right">预估分红</th></tr>';
   for(var i=0;i<data.length;i++){
     var r=data[i];
-    divs+='<div class="sim-row"><span style="font-weight:600;min-width:60px">'+r.name+'</span><span style="color:var(--sub);font-size:10px">股</span><input type="number" value="'+(shares[r.code]||0)+'" min="0" onchange="onShareChange(\''+r.code+'\',this.value)" id="i_'+r.code+'"><span class="out" id="o_'+r.code+'">¥'+Math.round(getAnn(r.code))+'</span></div>';
+    var sh=shares[r.code]||0;
+    var cost=r.ok?sh*r.price:0;
+    var ann_d=r.div*sh;
+    totalCost+=cost;totalDiv+=ann_d;totalShares+=sh;
+    divs+='<tr>'+
+      '<td><b>'+r.name+'</b><br><span style="font-size:9px;color:var(--sub)">¥'+r.price.toFixed(2)+'</span></td>'+
+      '<td style="text-align:right">'+
+        '<div class="stepper"><button onclick="stpShare(\''+r.code+'\',-100)">−</button>'+
+        '<input type="number" value="'+sh+'" step="100" min="0" onchange="onShareChange(\''+r.code+'\',this.value)" id="i_'+r.code+'">'+
+        '<button onclick="stpShare(\''+r.code+'\',100)">+</button></div>'+
+      '</td>'+
+      '<td style="text-align:right;color:var(--text);font-weight:600">¥'+cost.toLocaleString()+'</td>'+
+      '<td style="text-align:right;color:var(--sub)">¥'+r.div.toFixed(2)+'</td>'+
+      '<td style="text-align:right;color:var(--orange);font-weight:700">¥'+Math.round(ann_d).toLocaleString()+'</td>'+
+    '</tr>';
   }
-  divs+='<div class="sim-total"><div class="big" id="simT">¥'+ann.toLocaleString()+'</div><div class="label">预计年分红总额</div></div>';
-  divs+='<div class="panel"><h2>📅 下次分红日历</h2>';
+  // 合计行
+  divs+='<tr style="background:#f8f9fa;font-weight:700"><td>合计</td>'+
+    '<td style="text-align:right">'+totalShares+' 股</td>'+
+    '<td style="text-align:right">¥'+totalCost.toLocaleString()+'</td>'+
+    '<td></td>'+
+    '<td style="text-align:right;color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</td>'+
+  '</tr></table>'+
+  '<div style="margin-top:10px;padding:8px 12px;background:#f8f9fa;border-radius:6px;font-size:11px;color:var(--sub)">'+
+    '<span>点击 +/− 按钮快速调整股数（每次 100），或直接输入数值。成本按当前实时股价估算，分红按 2025 年披露数据测算。</span>'+
+  '</div></div>'+
+  '<div class="panel"><h2>📅 下次分红日历</h2>';
   for(var i=0;i<DIV_CAL.length;i++){
     var e=DIV_CAL[i];
     divs+='<div class="cal-row"><span><b>'+e.s+'</b>（'+e.t+'）</span><span style="color:var(--sub)">'+e.d+'</span><span>10派¥'+e.p10+'</span>'+(e.hot?'<span class="hot">本月</span>':'')+'</div>';
@@ -438,11 +467,16 @@ function renderAll(){
 function onShareChange(code,val){
   shares[code]=parseInt(val)||0;
   try{localStorage.setItem('vc_shares',JSON.stringify(shares));}catch(e){}
-  var o=document.getElementById('o_'+code);
-  if(o)o.textContent='¥'+Math.round(getAnn(code));
-  var ann=Math.round(calcTotal(getAnn));
-  var t=document.getElementById('simT');
-  if(t)t.textContent='¥'+ann.toLocaleString();
+  // 触发整体刷新（表格和首页联动）
+  renderAll();
+}
+
+function stpShare(code,delta){
+  var v=(shares[code]||0)+delta;
+  if(v<0)v=0;
+  shares[code]=v;
+  try{localStorage.setItem('vc_shares',JSON.stringify(shares));}catch(e){}
+  renderAll();
 }
 
 function switchTab(btn,id){
