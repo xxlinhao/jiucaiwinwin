@@ -195,7 +195,7 @@ async function load(){
   data=[];
   for(var i=0;i<CFG.length;i++){
     var c=CFG[i];
-    var row={name:c.name,code:c.code,role:c.role,tag:c.tag,div:c.div,buy:c.buy,roe:c.roe,divHist:c.divHist,earn:c.earn,divDt:c.divDt,price:0,prev:0,chg:0,pe:0,pb:0,mcap:0,divR:0,dist:0,needy:0,ok:false};
+    var row={name:c.name,code:c.code,role:c.role,tag:c.tag,div:c.div,buy:c.buy,roe:c.roe,divHist:c.divHist,earn:c.earn,divDt:c.divDt,cfo:c.cfo,fcf:c.fcf,cov:c.cov,safe:c.safe,price:0,prev:0,chg:0,pe:0,pb:0,mcap:0,divR:0,dist:0,needy:0,ok:false};
     try{
       var raw=await fetchOne(c.mkt,c.code);
       if(raw&&raw.f43){
@@ -284,7 +284,7 @@ function renderAll(){
     function pos(p){return Math.max(1,Math.min(99,(p-axesMin)/(axesMax-axesMin)*100))}
     var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#fde8e8'];
     var txtColors=['#27ae60','#27ae60','#7fb069','#e67e22','#e74c3c'];
-    var svg='<svg class="divseg-svg" viewBox="0 0 400 110">'; var segTop=28,segH=26,segBot=segTop+segH;
+    var svg='<svg class="divseg-svg" viewBox="0 0 400 110">'; var segTop=32,segH=26,segBot=segTop+segH;
     for(var kk=0;kk<5;kk++){
       var lP=pos(r.div/(rateVals[kk]/100));
       var rP=kk<4?pos(r.div/(rateVals[kk+1]/100)):99;
@@ -299,14 +299,15 @@ function renderAll(){
       svg+='<text x="'+tX.toFixed(2)+'%" y="'+lY+'" font-size="11" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
       svg+='<text x="'+tX.toFixed(2)+'%" y="'+(lY+12)+'" font-size="10" fill="#8b92a0" text-anchor="middle">'+(r.div/(rateVals[kk]/100)).toFixed(1)+'</text>';
     }
-    // 大号倒三角+标签
+    // 大号倒三角+标签（顶在SVG上沿）
     var curPct=pos(r.price);
     var lbW=10,lbX=Math.max(2,Math.min(100-lbW,curPct-lbW/2));
-    svg+='<polygon points="'+(curPct-3)+'%,4 '+(curPct+3)+'%,4 '+curPct.toFixed(2)+'%,16" fill="#e74c3c"/>';
-    svg+='<polygon points="'+(curPct-2)+'%,4 '+(curPct+2)+'%,4 '+curPct.toFixed(2)+'%,12" fill="#fff"/>';
-    svg+='<rect x="'+lbX.toFixed(2)+'%" y="18" width="'+lbW.toFixed(2)+'%" height="18" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="2.5"/>';
-    svg+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="30" font-size="11" font-weight="800" fill="#e74c3c" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
-    svg+='<line x1="'+curPct.toFixed(2)+'%" y1="16" x2="'+curPct.toFixed(2)+'%" y2="'+(segTop-1)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="3,3"/>';
+    // 红色实心三角（最显眼）
+    svg+='<polygon points="'+(curPct-4)+'%,0 '+(curPct+4)+'%,0 '+curPct.toFixed(2)+'%,18" fill="#e74c3c" stroke="#fff" stroke-width="1"/>';
+    // 红色方块标签
+    svg+='<rect x="'+lbX.toFixed(2)+'%" y="2" width="'+lbW.toFixed(2)+'%" height="16" rx="2" fill="#e74c3c" stroke="#c0392b" stroke-width="1.5"/>';
+    svg+='<text x="'+((lbX+lbW/2)).toFixed(2)+'%" y="14" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">'+r.price.toFixed(2)+'</text>';
+    svg+='<line x1="'+curPct.toFixed(2)+'%" y1="18" x2="'+curPct.toFixed(2)+'%" y2="'+(segTop-1)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="2,2"/>';
     svg+='</svg>';
 
     // 营收净利组合图 SVG
@@ -379,7 +380,6 @@ function renderAll(){
       '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+svg+
       '<div style="margin-top:6px;padding:8px;background:#f8f9fa;border-radius:6px;font-size:11px"><b>当前股息率 '+r.divR.toFixed(2)+'%</b> · 买入建议：'+(r.buyBuy||'¥'+r.buy.toFixed(1))+'（股息率 '+((r.div/r.buy)*100).toFixed(2)+'%） · 距离理想买点：'+(r.needy>0?'高于¥'+r.needy.toFixed(2):'低于¥'+Math.abs(r.needy).toFixed(2)+' ✅')+'</div></div>'+
       '<div class="dl-section"><h4>📈 分红趋势（每股/元）</h4>'+(r.divHist&&r.divHist.length>1?buildDivTrend(r.divHist):'<div style="color:var(--sub)">数据不足</div>')+'</div>'+
-      '<div class="dl-section"><h4>💵 近五年每股分红</h4><div class="hist">'+(r.divHist||[]).map(function(v,i){return'<span>'+(i?'→ ':'')+'¥'+v+'</span>'}).join('')+'</div></div>'+
       '<div class="dl-section"><h4>📅 事件</h4><div class="dates-row"><span>📊 财报：'+(r.earn||'—')+'</span><span>💵 分红：'+(r.divDt||'—')+'</span></div></div>'+
     '</div></div>';
   }
