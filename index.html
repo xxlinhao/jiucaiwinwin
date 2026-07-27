@@ -171,6 +171,7 @@ async function load(){
 }
 
 function renderAll(){
+  try{
   // 记录当前打开的面板和当前 tab，重渲染后恢复
   var openIdx=[];
   document.querySelectorAll('.acc-head.open').forEach(function(el){
@@ -344,6 +345,10 @@ function renderAll(){
     var at=document.querySelector('.tabs button[data-tab="'+activeTabId+'"]');if(at)at.classList.add('on');
     ['dash','detail','divcenter','opp'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
     var e=document.getElementById(activeTabId);if(e)e.classList.remove('hidden');
+  }
+  }catch(e){
+    document.getElementById('dash').innerHTML='<div style="text-align:center;padding:20px;color:var(--red);font-size:12px">渲染异常：'+e.message+'</div>';
+    console.error('renderAll error',e);
   }
 }
 
