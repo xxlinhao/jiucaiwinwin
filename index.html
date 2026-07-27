@@ -225,40 +225,40 @@ function renderAll(){
     var pMin=priceBound[0],pMax=priceBound[priceBound.length-1];
     var segHTML='';
     // 单个 SVG 把整个分段条、刻度、标签、当前价位置都画出来
-    // 横轴价格范围：min(pMin,pMin*0.95) 到 max(pMax,pMax*1.05)
-    var leftMargin=r.div/0.07, rightMargin=r.div/0.035; // 7% 到 3.5% 范围
-    var axisMin=Math.min(leftMargin,pMin*0.9), axisMax=Math.max(rightMargin,pMax*1.1);
-    function pos(price){return Math.max(0,Math.min(100,(price-axisMin)/(axisMax-axisMin)*100))}
-    var sw=380,sh=90;
+    // 横轴按价格等距：rate=6 → 最小价(左)，rate=4 → 最大价(右)
+    function pos(price){return Math.max(0,Math.min(100,(price-axesMin)/(axesMax-axesMin)*100))}
+    var rateVals=[6,5.5,5.3,5,4.5,4];
+    var axesMin=r.div/0.07; // 7% 股息率对应价（最左）
+    var axesMax=r.div/0.035; // 3.5% 股息率对应价（最右）
     var segTop=22,segHeight=22,segBottom=segTop+segHeight;
     var labelTop=segBottom+14,labelBottom=labelTop+14;
-    segHTML+='<svg class="divseg-svg" viewBox="0 0 '+sw+' '+sh+'">';
+    segHTML+='<svg class="divseg-svg" viewBox="0 0 380 90">';
     // 6 个分段
-    var rateVals=[6,5.5,5.3,5,4.5,4];
-    var rateColors=['#27ae60','#27ae60','#7fb069','#e5b800','#e67e22','#e74c3c'];
     var segColors=['#d0f0d8','#c8eccf','#e8f5e0','#fff8d0','#ffe0c0','#fde8e8'];
-    // 分段绘制（rate=6 在最左，rate=4 在最右，价格递增）
-    var lastP=pos(r.div/0.07);
+    var txtColors=['#27ae60','#27ae60','#7fb069','#e5b800','#e67e22','#e74c3c'];
     for(var kk=0;kk<6;kk++){
-      var curP=pos(r.div/(rateVals[kk]/100));
-      var nextP=kk<5?pos(r.div/(rateVals[kk+1]/100)):pos(axisMax);
-      var segX=Math.max(curP,0), segW=Math.max(nextP-curP,3);
+      var leftP=pos(r.div/(rateVals[kk]/100));
+      var rightP=kk<5?pos(r.div/(rateVals[kk+1]/100)):100;
+      var segX=Math.max(0,leftP), segW=Math.max(2,rightP-segX);
       segHTML+='<rect x="'+segX.toFixed(2)+'%" y="'+segTop+'" width="'+segW.toFixed(2)+'%" height="'+segHeight+'" fill="'+segColors[kk]+'" rx="2"/>';
     }
     // 6 个刻度（边界处），下方标 股息率 + 股价
     for(var kk=0;kk<6;kk++){
       var tickX=pos(r.div/(rateVals[kk]/100));
-      var tickColor=rateColors[kk];
-      segHTML+='<line x1="'+tickX.toFixed(2)+'%" y1="'+(segTop-3)+'" x2="'+tickX.toFixed(2)+'%" y2="'+(segBottom+3)+'" stroke="'+tickColor+'" stroke-width="1" opacity=".5"/>';
-      // 标签放刻度正下方
-      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelTop+'" font-size="10" font-weight="700" fill="'+tickColor+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
+      segHTML+='<line x1="'+tickX.toFixed(2)+'%" y1="'+(segTop-3)+'" x2="'+tickX.toFixed(2)+'%" y2="'+(segBottom+3)+'" stroke="'+txtColors[kk]+'" stroke-width="1.2"/>';
+      segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelTop+'" font-size="10" font-weight="700" fill="'+txtColors[kk]+'" text-anchor="middle">'+rateVals[kk].toFixed(1)+'%</text>';
       segHTML+='<text x="'+tickX.toFixed(2)+'%" y="'+labelBottom+'" font-size="9" fill="#8b92a0" text-anchor="middle">¥'+(r.div/(rateVals[kk]/100)).toFixed(2)+'</text>';
     }
-    // 当前价倒三角 + 标签
-    var curPctPos=pos(r.price);
-    segHTML+='<polygon points="'+(curPctPos-1.2)+'%,18 '+(curPctPos+1.2)+'%,18 '+curPctPos.toFixed(2)+'%,22" fill="#e74c3c"/>';
-    segHTML+='<rect x="'+(curPctPos-12)+'%" y="2" width="24%" height="14" rx="2" fill="#fff" stroke="#e74c3c" stroke-width="1"/>';
-    segHTML+='<text x="'+curPctPos.toFixed(2)+'%" y="12" font-size="10" font-weight="700" fill="#e74c3c" text-anchor="middle">¥'+r.price.toFixed(2)+'</text>';
+    // 当前价倒三角 + 标签（位置精确一致）
+    var curPct=pos(r.price);
+    // 红框背景：用宽度自适应，不用百分比定位
+    var boxWidth=Math.max(22,6.5*r.price.toFixed(2).length+8);
+    var boxX=Math.max(2,Math.min(100-boxWidth,curPct-boxWidth/2));
+    segHTML+='<polygon points="'+(curPct-0.8)+'%,18 '+(curPct+0.8)+'%,18 '+curPct.toFixed(2)+'%,22" fill="#e74c3c"/>';
+    segHTML+='<rect x="'+boxX.toFixed(2)+'%" y="2" width="'+boxWidth.toFixed(2)+'%" height="14" rx="3" fill="#fff" stroke="#e74c3c" stroke-width="1"/>';
+    segHTML+='<text x="'+((boxX+boxWidth/2)).toFixed(2)+'%" y="12" font-size="10" font-weight="700" fill="#e74c3c" text-anchor="middle">¥'+r.price.toFixed(2)+'</text>';
+    // 三角下方画一条竖线连到对应分段位置
+    segHTML+='<line x1="'+curPct.toFixed(2)+'%" y1="22" x2="'+curPct.toFixed(2)+'%" y2="'+(segBottom-2)+'" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="2,2"/>';
     segHTML+='</svg>';
     // 营收/利润
     var rev=null,np=null;
@@ -318,7 +318,6 @@ function renderAll(){
   (bars?'<div style="font-size:10px;color:var(--sub);margin-top:6px"><span style="color:#2980b9">■ 营收</span> <span style="color:#e67e22;margin-left:8px">■ 净利</span>（亿元）</div><div class="trend-bars">'+bars+'</div>':'')+'</div>'+
   '<div class="dl-section"><h4>💵 近五年每股分红</h4><div class="hist">'+histStr+'</div></div>'+
   '<div class="dl-section"><h4>🎯 目标价分段（股息率节点）</h4><div style="font-size:10px;color:var(--sub);margin-bottom:4px">'+nudge+' · '+adviceStr+'</div>'+segHTML+'</div>'+
-  '<div class="dl-section"><h4>📊 各股息率对应价格明细</h4><table class="div-table"><tr><td class="col-rate">股息率</td><td class="col-rate">对应股价</td><td class="col-rate">距现价</td></tr>'+nodeRows+'</table></div>'+
   '<div class="dl-section"><h4>📅 事件提醒</h4><div class="dates-row"><span>📊 财报：'+(r.earn||'—')+'</span><span>💵 分红：'+(r.divDt||'—')+'</span></div></div>'+
 '</div></div>'
     );
