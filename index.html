@@ -235,7 +235,7 @@ function renderAll(){
 
   // ═══ 首页 ═══
   var ann=Math.round(calcTotal(getAnn));
-  var dash='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  var dash='<div style="font-size:12px;color:var(--text);font-weight:700;text-align:center;padding:8px 0 4px">📈 股息率价值投资 · 今日判断</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
 
   for(var i=0;i<data.length;i++){
     var r=data[i];
@@ -249,7 +249,8 @@ function renderAll(){
     if(r.needy>0)nudge='距补仓还需跌 ¥'+r.needy.toFixed(2);
     else if(r.needy<0)nudge='高于补仓价 ¥'+Math.abs(r.needy).toFixed(2);
     else nudge='已达到目标价';
-    dash+='<div class="dc '+lvl+'"><div class="dc-top">'+
+    dash+='<div class="dc '+lvl+'" data-code="'+r.code+'" onclick="openStockDetail(this)" style="cursor:pointer">'+
+      '<div class="dc-top">'+
       '<div><span class="name">'+r.name+'</span><span class="code"> '+r.code+'</span></div>'+
       '<span class="adv '+adv.cls+'">'+adv.text+'</span></div>'+
       '<div class="dc-p">¥'+r.price.toFixed(2)+' <span class="chip '+(up?'chip-up':'chip-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span></div>'+
@@ -260,7 +261,6 @@ function renderAll(){
           r.needy>0?'<span style="color:#2980b9;font-weight:700">低于目标价 ¥'+r.needy.toFixed(2)+'</span>':
           '<span style="color:var(--red);font-weight:700">高于目标价 ¥'+Math.abs(r.needy).toFixed(2)+'</span>'
         ))+'</div></div>';
-    '</div>';
   }
   dash+='</div>';
   document.getElementById('dash').innerHTML=dash;
@@ -450,6 +450,32 @@ function switchTab(btn,id){
   btn.classList.add('on');
   ['dash','detail','divcenter','opp'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
   var e=document.getElementById(id);if(e)e.classList.remove('hidden');
+}
+
+function openStockDetail(el){
+  var code=el.getAttribute('data-code');
+  // 找到对应的股票在data数组里的索引
+  var idx=-1;
+  for(var i=0;i<data.length;i++){if(data[i].code===code){idx=i;break;}}
+  if(idx<0)return;
+  // 切换到个股Tab
+  var tabs=document.querySelectorAll('.tabs button');
+  for(var i=0;i<tabs.length;i++){
+    if(tabs[i].getAttribute('data-tab')==='detail'){switchTab(tabs[i],'detail');break;}
+  }
+  // 展开对应行 + 滚动到可视区
+  setTimeout(function(){
+    var accItem=document.querySelector('[data-idx="'+idx+'"]');
+    if(accItem){
+      var head=accItem.querySelector('.acc-head');
+      var body=accItem.querySelector('.acc-body');
+      if(head&&body){
+        head.classList.add('open');
+        body.classList.add('show');
+        accItem.scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    }
+  },100);
 }
 
 function toggleAcc(el){
