@@ -120,9 +120,18 @@ footer{text-align:center;padding:14px 10px;font-size:10px;color:var(--sub)}
 <footer>东方财富API · 价值投资观察站</footer>
 
 <script>
+// 全局错误兜底显示在页面
+window.addEventListener('error',function(e){
+  var t=document.getElementById('time');
+  if(t)t.textContent='⚠️ 错误：'+(e.message||'脚本异常');
+  console.error('script err',e);
+});
+window.addEventListener('unhandledrejection',function(e){
+  var t=document.getElementById('time');
+  if(t)t.textContent='⚠️ 加载失败：'+(e.reason&&e.reason.message||e.reason||'网络');
+  console.error('unhandled',e.reason);
+});
 // 全部逻辑包在 try 里，任何异常直接显示
-try{
-
 var shares={};
 try{shares=JSON.parse(localStorage.getItem('vc_shares')||'{}');}catch(e){shares={};}
 
@@ -538,21 +547,14 @@ function toggleAcc(el){
 }
 
 // 立即执行首次加载 + 每分钟刷新
-try{
-  load().catch(function(e){
-    document.getElementById('time').textContent='加载失败：'+(e.message||e);
-    console.error('load fail',e);
-  });
-  setInterval(function(){
-    load().catch(function(e){console.error('refresh fail',e);});
-  },60000);
-}catch(e){
-  console.error('init fail',e);
-}
-
-}catch(e){
-  document.body.innerHTML='<div class="errbox">⚠️ 脚本错误：'+e.message+'<br><br>'+e.stack+'</div>';
-}
+load().catch(function(e){
+  var t=document.getElementById('time');
+  if(t)t.textContent='加载失败：'+(e.message||e);
+  console.error('load fail',e);
+});
+setInterval(function(){
+  load().catch(function(e){console.error('refresh fail',e);});
+},60000);
 </script>
 </body>
 </html>
