@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>咸鱼WinWin</title>
 <style>
 :root{--bg:#f2f4f7;--card:#fff;--border:#e4e7ed;--text:#1d1d2e;--sub:#8b92a0;--red:#e74c3c;--green:#27ae60;--blue:#2980b9;--orange:#f39c12;--yellow:#f1c40f;--purple:#8e44ad}
@@ -124,10 +127,10 @@ function advice(dist,divR){
 }
 
 async function fetchOne(mkt,code){
-  var u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2';
+  var u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2&_t='+Date.now();
   function timedFetch(url){
     return Promise.race([
-      fetch(url),
+      fetch(url,{cache:'no-store',headers:{'Cache-Control':'no-cache','Pragma':'no-cache'}}),
       new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'))},8000)})
     ]);
   }
