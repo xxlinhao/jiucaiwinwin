@@ -104,11 +104,9 @@ var CFG=[
 
 var DIV_CAL=[
 {s:'格力电器',t:'年报',d:'2026-08',p10:20,hot:1},
-{s:'伊利股份',t:'年报',d:'2026-06',p10:13.8},
 {s:'中国移动',t:'年报',d:'2026-09',p10:22},
 {s:'中国平安',t:'中报',d:'2026-10',p10:9.5},
 {s:'招商银行',t:'中报',d:'2027-01',p10:10},
-{s:'长江电力',t:'年报',d:'2026-02',p10:9.43},
 ];
 
 var data=[];
@@ -393,7 +391,7 @@ function renderAll(){
     document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
     var at=document.querySelector('.tabs button[data-tab="'+activeTabId+'"]');if(at)at.classList.add('on');
     ['dash','detail','divcenter','opp'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
-    var e=document.getElementById(id?activeTabId:id);if(e)e=e.classList.remove('hidden');
+    var e=document.getElementById(activeTabId);if(e)e.classList.remove('hidden');
   }
 }
 
