@@ -101,8 +101,6 @@ var CFG=[
 {name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,tag:'稳定',role:'稳定底仓',roe:14.8,divHist:['1.52','1.74','1.97','2.00','2.02'],earn:'2026-08-22',divDt:'2027-01-15',cfo:1970,fcf:1180,cov:3.9,safe:'🟢安全'},
 {name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,tag:'高息',role:'高股息',roe:18.2,divHist:['3.00','2.00','3.38','3.00','3.00'],earn:'2026-08-18',divDt:'2026-08-28',cfo:294,fcf:28,cov:1.7,safe:'🟡中等'},
 {name:'中国移动',code:'600941',mkt:1,div:4.70,buy:88,tag:'缓冲',role:'波动缓冲',roe:10.5,divHist:['2.09','3.87','4.41','4.56','4.70'],earn:'2026-08-15',divDt:'2026-09-10',cfo:3091,fcf:1820,cov:3.0,safe:'🟢安全'},
-{name:'长江电力',code:'600900',mkt:1,div:0.943,buy:25,tag:'防御',role:'防御核心',roe:15.0,divHist:['0.815','0.853','0.820','0.943','0.980'],earn:'2026-08-30',divDt:'2026-02-12',cfo:628,fcf:120,cov:2.5,safe:'🟢安全'},
-{name:'伊利股份',code:'600887',mkt:1,div:1.38,buy:28,tag:'消费',role:'消费龙头',roe:22.0,divHist:['0.960','1.040','1.200','1.220','1.380'],earn:'2026-08-28',divDt:'2026-06-05',cfo:110,fcf:50,cov:1.8,safe:'🟡中等'},
 ];
 
 var DIV_CAL=[
@@ -147,12 +145,10 @@ async function fetchOne(mkt,code){
 async function load(){
   document.getElementById('time').textContent='⏳ 加载中...';
   try{for(var i=0;i<CFG.length;i++){if(typeof shares[CFG[i].code]==='undefined')shares[CFG[i].code]=0;}}catch(e){}
-  data=[];
-  for(var i=0;i<CFG.length;i++){
-    var c=CFG[i];
+  // 并发拉取所有股票数据（不再串行等待）
+  var promises=CFG.map(function(c){
     var row={name:c.name,code:c.code,role:c.role,tag:c.tag,div:c.div,buy:c.buy,roe:c.roe,divHist:c.divHist,earn:c.earn,divDt:c.divDt,cfo:c.cfo,fcf:c.fcf,cov:c.cov,safe:c.safe,price:0,prev:0,chg:0,pe:0,pb:0,mcap:0,divR:0,dist:0,needy:0,ok:false};
-    try{
-      var raw=await fetchOne(c.mkt,c.code);
+    return fetchOne(c.mkt,c.code).then(function(raw){
       if(raw&&raw.f43){
         row.price=raw.f43;row.prev=raw.f60||0;
         row.chg=row.prev>0?((row.price-row.prev)/row.prev*100):0;
@@ -162,9 +158,10 @@ async function load(){
         row.dist=(row.price-c.buy)/c.buy*100;
         row.needy=c.buy-row.price;row.ok=true;
       }
-    }catch(e){}
-    data.push(row);
-  }
+      return row;
+    }).catch(function(){return row});
+  });
+  data=await Promise.all(promises);
   try{renderAll();}catch(e){
     var d=document.getElementById('dash');
     if(d)d.innerHTML='<div style="background:#fee;border:1px solid #fcc;color:#c33;padding:12px;border-radius:8px;margin:12px;font-size:12px;white-space:pre-wrap">⚠️ 渲染异常：'+e.message+'\n'+(e.stack||'').split('\n').slice(0,3).join('\n')+'</div>';
@@ -345,21 +342,24 @@ function renderAll(){
   // 分红中心
   var totalCost=0,totalDiv=0,totalShares=0;
   var divs='<div class="panel"><h2>📊 分红计算器</h2>'+
-    '<table class="divcal"><tr><th>股票</th><th style="text-align:right">目标股数</th><th style="text-align:right">预计成本</th><th style="text-align:right">每股分红</th><th style="text-align:right">预估分红</th></tr>';
+    '<table class="divcal"><tr><th>股票</th><th style="text-align:right">目标股数</th><th style="text-align:right">预计成本</th><th style="text-align:right">每股分红</th><th style="text-align:right">实时股息率</th><th style="text-align:right">预估分红</th></tr>';
   for(var i=0;i<data.length;i++){
     var r=data[i];
     var sh=shares[r.code]||0;
     var cost=r.ok?sh*r.price:0,ad=r.div*sh;
     totalCost+=cost;totalDiv+=ad;totalShares+=sh;
+    var yld=r.ok?(r.div/r.price*100).toFixed(2)+'%':'—';
+    var yldClr=r.ok?(r.div/r.price*100>=5?'var(--green)':(r.div/r.price*100>=4?'var(--orange)':'var(--red)')):'var(--sub)';
     divs+='<tr>'+
       '<td><b>'+r.name+'</b><br><span style="font-size:9px;color:var(--sub)">¥'+(r.ok?r.price.toFixed(2):'—')+'</span></td>'+
       '<td style="text-align:right"><div class="stepper"><button onclick="stpShare(\''+r.code+'\',-100)">−</button><input type="number" value="'+sh+'" step="100" min="0" onchange="onShareChange(\''+r.code+'\',this.value)" id="i_'+r.code+'"><button onclick="stpShare(\''+r.code+'\',100)">+</button></div></td>'+
       '<td style="text-align:right;font-weight:600">¥'+cost.toLocaleString()+'</td>'+
       '<td style="text-align:right;color:var(--sub)">¥'+r.div.toFixed(2)+'</td>'+
+      '<td style="text-align:right;font-weight:700;color:'+yldClr+'">'+yld+'</td>'+
       '<td style="text-align:right;color:var(--orange);font-weight:700">¥'+Math.round(ad).toLocaleString()+'</td>'+
     '</tr>';
   }
-  divs+='<tr style="background:#f8f9fa;font-weight:700"><td>合计</td><td style="text-align:right">'+totalShares+' 股</td><td style="text-align:right">¥'+totalCost.toLocaleString()+'</td><td></td><td style="text-align:right;color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</td></tr></table>'+
+  divs+='<tr style="background:#f8f9fa;font-weight:700"><td>合计</td><td style="text-align:right">'+totalShares+' 股</td><td style="text-align:right">¥'+totalCost.toLocaleString()+'</td><td></td><td></td><td style="text-align:right;color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</td></tr></table>'+
     '<div style="margin-top:10px;padding:8px 12px;background:#f8f9fa;border-radius:6px;font-size:11px;color:var(--sub)">点击 +/− 按钮调整股数（每次100），或直接输入数值。成本按实时股价估算。</div></div>'+
     '<div class="panel"><h2>📅 下次分红日历</h2>';
   for(var i=0;i<DIV_CAL.length;i++){
