@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>韭菜WinWin</title>
+<title>咸鱼WinWin</title>
 <style>
 :root{--bg:#f2f4f7;--card:#fff;--border:#e4e7ed;--text:#1d1d2e;--sub:#8b92a0;--red:#e74c3c;--green:#27ae60;--blue:#2980b9;--orange:#f39c12;--yellow:#f1c40f;--purple:#8e44ad}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -100,7 +100,8 @@ footer{text-align:center;padding:14px 10px;font-size:10px;color:var(--sub)}
 </head>
 <body>
 <header>
-<h1>🥬 韭菜WinWin</h1>
+<h1>🐟 咸鱼WinWin</h1>
+<div style="font-size:11px;color:var(--sub);text-align:center;margin-top:2px">做人如果没有梦想，跟咸鱼有什么分别</div>
 <div class="refresh-bar" onclick="load()"><span id="time">点击刷新获取实时数据</span> 🔄</div>
 </header>
 
@@ -174,10 +175,21 @@ var data=[];
 
 async function fetchOne(mkt,code){
   var u='https://push2.eastmoney.com/api/qt/stock/get?secid='+mkt+'.'+code+'&fields=f43,f44,f45,f46,f50,f60,f162,f167,f116,f169&invt=2&fltt=2';
-  try{
-    var r=await fetch(u);
-    if(r.ok){var j=await r.json();if(j&&j.data)return j.data}
-  }catch(e){}
+  // 带超时的 fetch
+  function timedFetch(url,ms){
+    return Promise.race([
+      fetch(url),
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'))},ms);})
+    ]);
+  }
+  // 多代理串行尝试
+  var urls=['https://corsproxy.io/?'+u, 'https://api.allorigins.win/raw?url='+encodeURIComponent(u), u];
+  for(var i=0;i<urls.length;i++){
+    try{
+      var r=await timedFetch(urls[i],8000);
+      if(r.ok){var j=await r.json();if(j&&j.data)return j.data}
+    }catch(e){}
+  }
   return{};
 }
 
@@ -219,8 +231,8 @@ async function load(){
     }catch(e){}
     data.push(row);
   }
-  renderAll();
-  document.getElementById('time').textContent='🟢 '+new Date().toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  try{renderAll();}catch(e){console.error('renderAll err',e);document.getElementById('dash').innerHTML='<div style="background:#fee;border:1px solid #fcc;color:#c33;padding:12px;border-radius:8px;margin:12px;font-size:12px;white-space:pre-wrap">⚠️ 渲染异常：'+e.message+'<br>'+(e.stack||'').split('\n').slice(0,3).join('\n')+'</div>';}
+  document.getElementById('time').textContent=new Date().toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 
 function showErr(e){
@@ -230,14 +242,15 @@ function showErr(e){
 }
 
 function renderAll(){
-  // 保存展开状态
-  var openIdx=[];
-  document.querySelectorAll('.acc-head.open').forEach(function(el){
-    var i=parseInt(el.parentNode.getAttribute('data-idx')||-1);
-    if(i>=0)openIdx.push(i);
-  });
-  var activeTab=document.querySelector('.tabs button.on');
-  var activeTabId=activeTab?activeTab.getAttribute('data-tab'):'dash';
+  try{
+    // 保存展开状态
+    var openIdx=[];
+    document.querySelectorAll('.acc-head.open').forEach(function(el){
+      var i=parseInt(el.parentNode.getAttribute('data-idx')||-1);
+      if(i>=0)openIdx.push(i);
+    });
+    var activeTab=document.querySelector('.tabs button.on');
+    var activeTabId=activeTab?activeTab.getAttribute('data-tab'):'dash';
 
   // ═══ 首页 ═══
   var ann=Math.round(calcTotal(getAnn));
@@ -519,8 +532,17 @@ function toggleAcc(el){
 }
 
 // 立即执行首次加载 + 每分钟刷新
-load();
-setInterval(load,60000);
+try{
+  load().catch(function(e){
+    document.getElementById('time').textContent='加载失败：'+(e.message||e);
+    console.error('load fail',e);
+  });
+  setInterval(function(){
+    load().catch(function(e){console.error('refresh fail',e);});
+  },60000);
+}catch(e){
+  console.error('init fail',e);
+}
 
 }catch(e){
   document.body.innerHTML='<div class="errbox">⚠️ 脚本错误：'+e.message+'<br><br>'+e.stack+'</div>';
