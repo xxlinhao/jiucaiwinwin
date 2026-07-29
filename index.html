@@ -20,7 +20,7 @@ header .st{font-size:11px;color:var(--sub);text-align:center;margin-top:2px}
 .tabs button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 .dc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;position:relative;min-height:130px;margin-bottom:0}
 .dc::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;border-radius:2px 0 0 2px}
-.dc.safe::before{background:var(--green)}.dc.warn::before{background:var(--orange)}.dc.danger::before{background:var(--red)}.dc.yellow::before{background:var(--yellow)}
+.dc.l0::before{background:#1a7a3a}.dc.l1::before{background:#27ae60}.dc.l2::before{background:#b8860b}.dc.l3::before{background:#d35400}.dc.l4::before{background:#c0392b}
 .dc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
 .dc-top .name{font-size:13px;font-weight:700;line-height:1.2}
 .dc-top .code{font-size:10px;color:var(--sub);margin-left:3px}
@@ -112,8 +112,15 @@ var DIV_CAL=[
 
 var data=[];
 
-function divLevel(d){if(d<5)return'danger';if(d<5.3)return'yellow';if(d<5.5)return'warn';return'safe'}
-function divColor(d){if(d<5)return'var(--red)';if(d<5.3)return'var(--orange)';if(d<5.5)return'var(--yellow)';return'var(--green)'}
+function divZone(d){
+  if(d>=6.0)return{label:'极佳买入',color:'#1a7a3a',bg:'#d0f0d8',cls:'l0'};
+  if(d>=5.5)return{label:'买入',color:'#27ae60',bg:'#d8f0e0',cls:'l1'};
+  if(d>=5.0)return{label:'观察',color:'#b8860b',bg:'#fffbe0',cls:'l2'};
+  if(d>=4.0)return{label:'等待',color:'#d35400',bg:'#ffe8d0',cls:'l3'};
+  return{label:'高估',color:'#c0392b',bg:'#fde8e8',cls:'l4'};
+}
+function divLevel(d){return divZone(d).cls}
+function divColor(d){return divZone(d).color}
 function divBarPct(d){if(d<=4)return 0;if(d>=6)return 100;return(d-4)/2*100}
 function getAnn(code){for(var i=0;i<CFG.length;i++)if(CFG[i].code===code)return(shares[code]||0)*CFG[i].div;return 0}
 function calcTotal(func){var t=0;for(var i=0;i<CFG.length;i++)t+=func(CFG[i].code);return t}
@@ -216,12 +223,12 @@ function renderAll(){
   for(var i=0;i<data.length;i++){
     var r=data[i];
     if(!r.ok){dash+='<div class="dc"><div class="dc-top"><span class="name">'+r.name+'</span></div><div style="font-size:11px;color:var(--sub);padding:8px 0">数据加载中</div></div>';continue;}
-    var up=r.chg>0,lvl=divLevel(r.divR),clr=divColor(r.divR),adv=advice(r.dist,r.divR),pct=divBarPct(r.divR);
+    var up=r.chg>0,lvl=divLevel(r.divR),clr=divColor(r.divR),adv=advice(r.dist,r.divR),pct=divBarPct(r.divR),zone=divZone(r.divR);
     var nudge='';
     if(Math.abs(r.needy)<0.5)nudge='<span style="color:var(--green);font-weight:700">🎯 目标价范围内</span>';
     else if(r.needy>0)nudge='<span style="color:#2980b9;font-weight:700">低于目标 ¥'+r.needy.toFixed(2)+'</span>';
     else nudge='<span style="color:var(--red);font-weight:700">高于目标 ¥'+Math.abs(r.needy).toFixed(2)+'</span>';
-    dash+='<div class="dc '+lvl+'" data-code="'+r.code+'" onclick="openStockDetail(this)" style="cursor:pointer">'+
+    dash+='<div class="dc '+lvl+'" data-code="'+r.code+'" onclick="openStockDetail(this)" style="cursor:pointer;background:'+zone.bg+'">'+
       '<div class="dc-top">'+
         '<div><span class="name">'+r.name+'</span><span class="code"> '+r.code+'</span></div>'+
         '<span class="adv '+adv.cls+'">'+adv.text+'</span></div>'+
@@ -231,7 +238,15 @@ function renderAll(){
       '<div style="font-size:10px;color:var(--sub);margin-top:4px">'+nudge+'</div></div>';
   }
   dash+='</div>';
-  document.getElementById('dash').innerHTML=dash;
+  document.getElementById('dash').innerHTML=dash+
+    '<div style="margin-top:10px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:10px">'+
+    '<b style="font-size:11px">📖 图例</b> '+
+    '<span style="color:#1a7a3a;margin-left:6px">≥6.0% 极佳</span> '+
+    '<span style="color:#27ae60;margin-left:4px">5.5-6.0% 买入</span> '+
+    '<span style="color:#b8860b;margin-left:4px">5.0-5.5% 观察</span> '+
+    '<span style="color:#d35400;margin-left:4px">4.0-5.0% 等待</span> '+
+    '<span style="color:#c0392b;margin-left:4px"><4.0% 高估</span>'+
+    '</div>';
 
   // 个股详情
   var detail='<div style="margin-bottom:12px;font-size:11px;color:var(--sub)">点击股票行展开查看详细数据</div>';
@@ -313,8 +328,9 @@ function renderAll(){
       bars+='</svg>';
     }
 
+    var zone=divZone(r.divR);
     detail+='<div class="acc-item" data-idx="'+i+'"><div class="acc-head" onclick="toggleAcc(this)">'+
-      '<span class="name">'+(i+1)+'. '+r.name+'</span>'+
+      '<span class="name">'+(i+1)+'. '+r.name+' <span style="font-size:10px;color:'+zone.color+'">（'+zone.label+'区 '+r.divR.toFixed(2)+'%）</span></span>'+
       '<span class="price">¥'+r.price.toFixed(2)+'</span>'+
       '<span class="chg '+(up?'chip-up':'chip-down')+'">'+(up?'+':'')+r.chg.toFixed(2)+'%</span>'+
       '<span class="arrow">▼</span></div>'+
@@ -366,7 +382,15 @@ function renderAll(){
     var e=DIV_CAL[i];
     divs+='<div class="cal-row"><span><b>'+e.s+'</b>（'+e.t+'）</span><span style="color:var(--sub)">'+e.d+'</span><span>10派¥'+e.p10+'</span>'+(e.hot?'<span class="hot">本月</span>':'')+'</div>';
   }
-  divs+='</div>';
+  divs+='</div>'+
+  '<div style="margin-top:10px;padding:8px 10px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:10px">'+
+  '<b style="font-size:11px">📖 股息率区间参考</b><br>'+
+  '<span style="color:#1a7a3a">≥6.0% 极佳买入 — 黄金机会，可重点加仓</span><br>'+
+  '<span style="color:#27ae60">5.5-6.0% 买入 — 好买点，符合目标</span><br>'+
+  '<span style="color:#b8860b">5.0-5.5% 观察 — 可持有，分批考虑</span><br>'+
+  '<span style="color:#d35400">4.0-5.0% 等待 — 不主动买，等回调</span><br>'+
+  '<span style="color:#c0392b"><4.0% 高估 — 只持有，不追买</span>'+
+  '</div>';
   document.getElementById('divcenter').innerHTML=divs;
 
   // 机会排行
