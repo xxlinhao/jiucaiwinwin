@@ -153,6 +153,7 @@ async function fetchOne(mkt,code){
 
 async function load(){
   document.getElementById('time').textContent='⏳ 加载中...';
+  document.getElementById('dash').innerHTML='<div style="text-align:center;padding:30px;color:var(--sub);font-size:13px">⏳ 正在获取行情...</div>';
   try{for(var i=0;i<CFG.length;i++){if(typeof shares[CFG[i].code]==='undefined')shares[CFG[i].code]=0;}}catch(e){}
   // 并发拉取所有股票数据（不再串行等待）
   var promises=CFG.map(function(c){
@@ -211,6 +212,8 @@ function buildDivTrend(hist){
 }
 
 function renderAll(){
+  // 数据没加载完时防抖，避免空白
+  if(!data||data.length===0){return;}
   var openIdx=[];
   document.querySelectorAll('.acc-head.open').forEach(function(el){
     var i=parseInt(el.parentNode.getAttribute('data-idx')||-1);
