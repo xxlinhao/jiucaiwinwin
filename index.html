@@ -428,12 +428,17 @@ function renderAll(){
     '</div>';
   }
   var tplClr=totalPL>0?'var(--red)':totalPL<0?'var(--green)':'var(--sub)';
-  opps+='<div style="background:#f8f9fa;border-radius:8px;padding:10px 12px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">'+
-    '<span><span style="color:var(--sub);font-weight:400">总成本</span> ¥'+totalCost.toLocaleString()+'</span>'+
-    '<span><span style="color:var(--sub);font-weight:400">总盈亏</span> <span style="color:'+tplClr+'">'+(totalPL>=0?'+':'')+totalPL.toFixed(0)+'</span></span>'+
-    '<span><span style="color:var(--sub);font-weight:400">年分红</span> <span style="color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</span></span>'+
-  '</div>'+
-  '<div style="margin-top:10px;padding:8px 12px;background:#f8f9fa;border-radius:6px;font-size:11px;color:var(--sub)">成本按实际买入均价录入（保留3位小数）。股息率 = 年分红 / 持仓成本。盈亏不含已到账分红。</div></div>';
+  var retRate=totalCost>0?(totalPL/totalCost*100):0;
+  var divCostRate=totalCost>0?(totalDiv/totalCost*100):0;
+  var retClr=retRate>=0?'var(--red)':'var(--green)';
+  var divClr=divCostRate>=6?'#2980b9':divCostRate>=5.5?'#27ae60':divCostRate>=5?'#b8860b':divCostRate>=4?'#d35400':divCostRate>0?'#c0392b':'var(--sub)';
+  opps+='<div style="background:#f8f9fa;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.8">'+
+    '<div><span style="color:var(--sub);font-weight:400">总成本：</span><b>¥'+totalCost.toLocaleString()+'</b></div>'+
+    '<div><span style="color:var(--sub);font-weight:400">浮动盈亏：</span><b style="color:'+tplClr+'">'+(totalPL>=0?'+':'')+totalPL.toFixed(0)+'</b></div>'+
+    '<div><span style="color:var(--sub);font-weight:400">收益率：</span><b style="color:'+retClr+'">'+(retRate>=0?'+':'')+retRate.toFixed(2)+'%</b></div>'+
+    '<div><span style="color:var(--sub);font-weight:400">年分红预估：</span><b style="color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</b></div>'+
+    '<div><span style="color:var(--sub);font-weight:400">成本股息率：</span><b style="color:'+divClr+'">'+divCostRate.toFixed(2)+'%</b></div>'+
+  '</div></div>';
   document.getElementById('opp').innerHTML=opps;
 
   // 恢复状态
