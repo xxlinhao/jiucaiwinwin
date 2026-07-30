@@ -82,7 +82,7 @@ footer{text-align:center;padding:14px 10px;font-size:10px;color:var(--sub)}
 <button class="on" data-tab="dash" onclick="switchTab(this,'dash')">🏠 首页</button>
 <button data-tab="detail" onclick="switchTab(this,'detail')">🔍 个股</button>
 <button data-tab="divcenter" onclick="switchTab(this,'divcenter')">💰 分红</button>
-<button data-tab="opp" onclick="switchTab(this,'opp')">⭐ 机会</button>
+<button data-tab="opp" onclick="switchTab(this,'opp')">📊 持仓</button>
 </div>
 
 <div id="dash"></div>
@@ -95,6 +95,8 @@ footer{text-align:center;padding:14px 10px;font-size:10px;color:var(--sub)}
 <script>
 var shares={};
 try{shares=JSON.parse(localStorage.getItem('vc_shares')||'{}');}catch(e){shares={};}
+var holdings={};
+try{holdings=JSON.parse(localStorage.getItem('vc_holdings')||'{}');}catch(e){holdings={};}
 
 var CFG=[
 {name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,tag:'周期',role:'周期弹性',roe:12.5,divHist:['2.50','2.55','2.55','2.55','2.70'],earn:'2026-08-28',divDt:'2026-10-20',cfo:1680,fcf:850,cov:3.4,safe:'🟢安全'},
@@ -394,20 +396,33 @@ function renderAll(){
   '</div>';
   document.getElementById('divcenter').innerHTML=divs;
 
-  // 机会排行
-  var opps='<div class="panel"><h2>⭐ 下次机会</h2>';
-  var sorted=data.slice().filter(function(r){return r.buy>0&&r.ok}).sort(function(a,b){return a.dist-b.dist});
-  for(var i=0;i<sorted.length;i++){
-    var r=sorted[i];
-    var stars='',sc=r.dist<=0?5:r.dist<=3?4:r.dist<=5?3:r.dist<=8?2:1;
-    for(var s=0;s<5;s++)stars+=s<sc?'★':'☆';
-    var clr=r.dist<=5?'var(--green)':'var(--orange)';
-    var needStr=r.needy>0?('需跌 ¥'+r.needy.toFixed(2)):'已在补仓区';
-    opps+='<div class="opp-item"><span style="font-weight:700;min-width:24px">'+(i+1)+'.</span>'+
-      '<div><div style="font-size:12px;font-weight:600">'+r.name+'</div><div style="font-size:10px;color:var(--sub)">¥'+(r.price>0?r.price.toFixed(2):'-')+' → ¥'+r.buy+' · '+needStr+'</div></div>'+
-      '<div style="text-align:right"><div class="opp-stars">'+stars+'</div><div style="font-size:11px;font-weight:700;color:'+clr+'">'+(r.dist>=0?'+':'')+r.dist.toFixed(1)+'%</div></div></div>';
+  // 持仓页
+  var totalMV=0,totalCost=0,totalPL=0,totalDiv=0;
+  var opps='<div class="panel"><h2>📊 持仓管理</h2>'+
+    '<table class="divcal"><tr><th>股票</th><th style="text-align:right">持股</th><th style="text-align:right">成本/股</th><th style="text-align:right">成本股息率</th><th style="text-align:right">浮动盈亏</th><th style="text-align:right">年分红</th></tr>';
+  for(var i=0;i<CFG.length;i++){
+    var c=CFG[i],r=getStockData(c.code);
+    var h=holdings[c.code]||{shares:0,cost:0};
+    var sh=h.shares||0,costPer=h.cost||0;
+    var mv=r.ok?sh*r.price:0,tc=costPer*sh;
+    var pl=r.ok?mv-tc:0;
+    var cdr=costPer>0?(c.div/costPer*100):0;
+    var cdrClr=cdr>=6?'#2980b9':cdr>=5.5?'#27ae60':cdr>=5?'#b8860b':cdr>=4?'#d35400':cdr>0?'#c0392b':'var(--sub)';
+    var annDiv=c.div*sh;
+    var plClr=pl>0?'var(--red)':pl<0?'var(--green)':'var(--sub)';
+    totalMV+=mv;totalCost+=tc;totalPL+=pl;totalDiv+=annDiv;
+    opps+='<tr>'+
+      '<td><b>'+c.name+'</b><br><span style="font-size:9px;color:var(--sub)">¥'+(r.ok?r.price.toFixed(2):'—')+'</span></td>'+
+      '<td style="text-align:right"><div class="stepper"><button onclick="stpHolding(\''+c.code+'\',-100)">−</button><input type="number" value="'+sh+'" step="100" min="0" onchange="onHoldingChange(\''+c.code+'\',this.value)" id="hs_'+c.code+'"><button onclick="stpHolding(\''+c.code+'\',100)">+</button></div></td>'+
+      '<td style="text-align:right"><input type="number" value="'+(costPer||'')+'" step="0.001" placeholder="成本" onchange="onCostChange(\''+c.code+'\',this.value)" style="width:65px;padding:3px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:right"></td>'+
+      '<td style="text-align:right;font-weight:700;color:'+cdrClr+'">'+(cdr>0?cdr.toFixed(2)+'%':'—')+'</td>'+
+      '<td style="text-align:right;font-weight:700;color:'+plClr+'">'+(pl!==0?(pl>=0?'+':'')+Math.abs(pl).toFixed(2):'—')+'</td>'+
+      '<td style="text-align:right;color:var(--orange);font-weight:700">¥'+Math.round(annDiv).toLocaleString()+'</td>'+
+    '</tr>';
   }
-  opps+='</div>';
+  var tplClr=totalPL>0?'var(--red)':totalPL<0?'var(--green)':'var(--sub)';
+  opps+='<tr style="background:#f8f9fa;font-weight:700"><td>合计</td><td></td><td style="text-align:right">¥'+totalCost.toLocaleString()+'</td><td></td><td style="text-align:right;color:'+tplClr+'">'+(totalPL>=0?'+':'')+totalPL.toFixed(2)+'</td><td style="text-align:right;color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</td></tr></table>'+
+    '<div style="margin-top:10px;padding:8px 12px;background:#f8f9fa;border-radius:6px;font-size:11px;color:var(--sub)">成本按实际买入均价录入（保留3位小数）。股息率 = 年分红 / 持仓成本。盈亏不含已到账分红。</div></div>';
   document.getElementById('opp').innerHTML=opps;
 
   // 恢复状态
@@ -425,6 +440,9 @@ function renderAll(){
 
 function onShareChange(code,val){shares[code]=parseInt(val)||0;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}renderAll();}
 function stpShare(code,delta){var v=(shares[code]||0)+delta;if(v<0)v=0;shares[code]=v;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}renderAll();}
+function onHoldingChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.shares=parseInt(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
+function stpHolding(code,delta){var h=holdings[code]||{shares:0,cost:0};h.shares=(h.shares||0)+delta;if(h.shares<0)h.shares=0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
+function onCostChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.cost=parseFloat(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
 function switchTab(btn,id){
   document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
   btn.classList.add('on');
