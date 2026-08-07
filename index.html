@@ -102,29 +102,36 @@ var holdings={};
 try{holdings=JSON.parse(localStorage.getItem('vc_holdings')||'{}');}catch(e){holdings={};}
 var enabledCodes={};
 try{enabledCodes=JSON.parse(localStorage.getItem('vc_enabled')||'{}');}catch(e){enabledCodes={};}
-// 默认全部启用的股票
-for(var i=0;i<CFG.length;i++){if(typeof enabledCodes[CFG[i].code]==='undefined')enabledCodes[CFG[i].code]=true;}
+// 首次使用：默认仅招行+平安，其他全关
+if(Object.keys(enabledCodes).length===0){
+  for(var i=0;i<CFG.length;i++)enabledCodes[CFG[i].code]=false;
+  enabledCodes['600036']=true; enabledCodes['601318']=true;
+  try{localStorage.setItem('vc_enabled',JSON.stringify(enabledCodes))}catch(e){}
+}
 function getEnabled(){return CFG.filter(function(c){return enabledCodes[c.code]!==false;})}
 
 var CFG=[
-{name:'工商银行',code:'601398',mkt:1,div:0.32,buy:5.5,cat:'银行',roe:11,divHist:['0.26','0.28','0.29','0.30','0.32'],earn:'2026-10-30',divDt:'2027-06-15',cfo:16100,fcf:9000,cov:6.0,safe:'🟢安全'},
-{name:'建设银行',code:'601939',mkt:1,div:0.39,buy:6.5,cat:'银行',roe:12,divHist:['0.32','0.34','0.36','0.38','0.39'],earn:'2026-10-28',divDt:'2027-06-10',cfo:13800,fcf:7500,cov:5.5,safe:'🟢安全'},
-{name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,cat:'银行',roe:14.8,divHist:['1.52','1.74','1.97','2.00','2.02'],earn:'2026-08-22',divDt:'2027-01-15',cfo:1970,fcf:1180,cov:3.9,safe:'🟢安全'},
-{name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,cat:'保险',roe:12.5,divHist:['2.50','2.55','2.55','2.55','2.70'],earn:'2026-08-28',divDt:'2026-10-20',cfo:1680,fcf:850,cov:3.4,safe:'🟢安全'},
-{name:'中国人寿',code:'601628',mkt:1,div:0.65,buy:30,cat:'保险',roe:9,divHist:['0.50','0.55','0.60','0.63','0.65'],earn:'2026-10-28',divDt:'2027-05-20',cfo:4200,fcf:2000,cov:3.2,safe:'🟢安全'},
-{name:'长江电力',code:'600900',mkt:1,div:0.943,buy:25,cat:'能源',roe:15,divHist:['0.82','0.85','0.82','0.94','0.98'],earn:'2026-10-30',divDt:'2026-12-15',cfo:628,fcf:120,cov:2.5,safe:'🟢安全'},
-{name:'国电电力',code:'600795',mkt:1,div:0.08,buy:3.5,cat:'能源',roe:7,divHist:['0.05','0.06','0.07','0.08','0.08'],earn:'2026-10-28',divDt:'2027-05-15',cfo:350,fcf:-100,cov:1.0,safe:'🟡中等'},
-{name:'中国神华',code:'601088',mkt:1,div:2.20,buy:30,cat:'能源',roe:14,divHist:['1.81','2.00','2.10','2.15','2.20'],earn:'2026-08-28',divDt:'2027-06-30',cfo:1200,fcf:700,cov:3.5,safe:'🟢安全'},
-{name:'中国石化',code:'600028',mkt:1,div:0.30,buy:5,cat:'能源',roe:8,divHist:['0.25','0.28','0.29','0.30','0.30'],earn:'2026-10-28',divDt:'2027-06-20',cfo:1800,fcf:400,cov:2.0,safe:'🟡中等'},
-{name:'中国石油',code:'601857',mkt:1,div:0.42,buy:8,cat:'能源',roe:9,divHist:['0.35','0.38','0.40','0.41','0.42'],earn:'2026-10-30',divDt:'2027-06-30',cfo:3800,fcf:1500,cov:2.8,safe:'🟢安全'},
-{name:'陕西煤业',code:'601225',mkt:1,div:2.00,buy:20,cat:'能源',roe:18,divHist:['1.50','1.80','1.90','1.95','2.00'],earn:'2026-10-28',divDt:'2027-06-15',cfo:450,fcf:200,cov:3.0,safe:'🟢安全'},
-{name:'美的集团',code:'000333',mkt:0,div:3.00,buy:50,cat:'消费',roe:20,divHist:['2.00','2.40','2.60','2.80','3.00'],earn:'2026-08-28',divDt:'2027-05-20',cfo:420,fcf:250,cov:2.8,safe:'🟢安全'},
-{name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,cat:'消费',roe:18.2,divHist:['3.00','2.00','3.38','3.00','3.00'],earn:'2026-08-18',divDt:'2026-08-28',cfo:294,fcf:28,cov:1.7,safe:'🟡中等'},
-{name:'福耀玻璃',code:'600660',mkt:1,div:1.30,buy:35,cat:'消费',roe:18,divHist:['0.80','1.00','1.10','1.20','1.30'],earn:'2026-08-20',divDt:'2027-05-15',cfo:65,fcf:20,cov:2.0,safe:'🟢安全'},
-{name:'伊利股份',code:'600887',mkt:1,div:1.38,buy:28,cat:'消费',roe:22,divHist:['0.96','1.04','1.20','1.22','1.38'],earn:'2026-08-28',divDt:'2027-05-25',cfo:110,fcf:50,cov:1.8,safe:'🟡中等'},
-{name:'贵州茅台',code:'600519',mkt:1,div:30.00,buy:1200,cat:'消费',roe:30,divHist:['19.00','21.00','24.00','28.00','30.00'],earn:'2026-08-18',divDt:'2027-06-20',cfo:840,fcf:600,cov:3.5,safe:'🟢安全'},
-{name:'泸州老窖',code:'000568',mkt:0,div:5.00,buy:180,cat:'消费',roe:28,divHist:['3.50','4.00','4.50','4.80','5.00'],earn:'2026-10-28',divDt:'2027-06-15',cfo:120,fcf:80,cov:2.5,safe:'🟢安全'},
-{name:'海天味业',code:'603288',mkt:1,div:1.50,buy:50,cat:'消费',roe:20,divHist:['1.00','1.10','1.20','1.35','1.50'],earn:'2026-10-28',divDt:'2027-05-30',cfo:68,fcf:35,cov:2.0,safe:'🟢安全'},
+{name:'工商银行',code:'601398',mkt:1,div:0.32,buy:5.5,cat:'大金融',roe:11,divHist:['0.26','0.28','0.29','0.30','0.32'],earn:'2026-10-30',divDt:'2027-06-15',cfo:16100,fcf:9000,cov:6.0,safe:'🟢安全'},
+{name:'建设银行',code:'601939',mkt:1,div:0.39,buy:6.5,cat:'大金融',roe:12,divHist:['0.32','0.34','0.36','0.38','0.39'],earn:'2026-10-28',divDt:'2027-06-10',cfo:13800,fcf:7500,cov:5.5,safe:'🟢安全'},
+{name:'招商银行',code:'600036',mkt:1,div:2.016,buy:37,cat:'大金融',roe:14.8,divHist:['1.52','1.74','1.97','2.00','2.02'],earn:'2026-08-22',divDt:'2027-01-15',cfo:1970,fcf:1180,cov:3.9,safe:'🟢安全'},
+{name:'农业银行',code:'601288',mkt:1,div:0.20,buy:4,cat:'大金融',roe:11,divHist:['0.17','0.18','0.19','0.19','0.20'],earn:'2026-10-30',divDt:'2027-06-15',cfo:13000,fcf:7000,cov:5.0,safe:'🟢安全'},
+{name:'中国平安',code:'601318',mkt:1,div:2.70,buy:50,cat:'大金融',roe:12.5,divHist:['2.50','2.55','2.55','2.55','2.70'],earn:'2026-08-28',divDt:'2026-10-20',cfo:1680,fcf:850,cov:3.4,safe:'🟢安全'},
+{name:'中国人寿',code:'601628',mkt:1,div:0.65,buy:30,cat:'大金融',roe:9,divHist:['0.50','0.55','0.60','0.63','0.65'],earn:'2026-10-28',divDt:'2027-05-20',cfo:4200,fcf:2000,cov:3.2,safe:'🟢安全'},
+{name:'长江电力',code:'600900',mkt:1,div:0.943,buy:25,cat:'公用事业',roe:15,divHist:['0.82','0.85','0.82','0.94','0.98'],earn:'2026-10-30',divDt:'2026-12-15',cfo:628,fcf:120,cov:2.5,safe:'🟢安全'},
+{name:'国电电力',code:'600795',mkt:1,div:0.08,buy:3.5,cat:'公用事业',roe:7,divHist:['0.05','0.06','0.07','0.08','0.08'],earn:'2026-10-28',divDt:'2027-05-15',cfo:350,fcf:-100,cov:1.0,safe:'🟡中等'},
+{name:'中国核电',code:'601985',mkt:1,div:0.16,buy:7,cat:'公用事业',roe:10,divHist:['0.10','0.12','0.13','0.15','0.16'],earn:'2026-10-28',divDt:'2027-07-15',cfo:460,fcf:-120,cov:1.2,safe:'🟡中等'},
+{name:'中国移动',code:'600941',mkt:1,div:4.70,buy:88,cat:'公用事业',roe:10.5,divHist:['2.09','3.87','4.41','4.56','4.70'],earn:'2026-08-15',divDt:'2026-09-10',cfo:3091,fcf:1820,cov:3.0,safe:'🟢安全'},
+{name:'中国神华',code:'601088',mkt:1,div:2.20,buy:30,cat:'能源资源',roe:14,divHist:['1.81','2.00','2.10','2.15','2.20'],earn:'2026-08-28',divDt:'2027-06-30',cfo:1200,fcf:700,cov:3.5,safe:'🟢安全'},
+{name:'陕西煤业',code:'601225',mkt:1,div:2.00,buy:20,cat:'能源资源',roe:18,divHist:['1.50','1.80','1.90','1.95','2.00'],earn:'2026-10-28',divDt:'2027-06-15',cfo:450,fcf:200,cov:3.0,safe:'🟢安全'},
+{name:'中国石化',code:'600028',mkt:1,div:0.30,buy:5,cat:'能源资源',roe:8,divHist:['0.25','0.28','0.29','0.30','0.30'],earn:'2026-10-28',divDt:'2027-06-20',cfo:1800,fcf:400,cov:2.0,safe:'🟡中等'},
+{name:'中国石油',code:'601857',mkt:1,div:0.42,buy:8,cat:'能源资源',roe:9,divHist:['0.35','0.38','0.40','0.41','0.42'],earn:'2026-10-30',divDt:'2027-06-30',cfo:3800,fcf:1500,cov:2.8,safe:'🟢安全'},
+{name:'美的集团',code:'000333',mkt:0,div:3.00,buy:50,cat:'消费制造',roe:20,divHist:['2.00','2.40','2.60','2.80','3.00'],earn:'2026-08-28',divDt:'2027-05-20',cfo:420,fcf:250,cov:2.8,safe:'🟢安全'},
+{name:'格力电器',code:'000651',mkt:0,div:3.00,buy:38,cat:'消费制造',roe:18.2,divHist:['3.00','2.00','3.38','3.00','3.00'],earn:'2026-08-18',divDt:'2026-08-28',cfo:294,fcf:28,cov:1.7,safe:'🟡中等'},
+{name:'福耀玻璃',code:'600660',mkt:1,div:1.30,buy:35,cat:'消费制造',roe:18,divHist:['0.80','1.00','1.10','1.20','1.30'],earn:'2026-08-20',divDt:'2027-05-15',cfo:65,fcf:20,cov:2.0,safe:'🟢安全'},
+{name:'伊利股份',code:'600887',mkt:1,div:1.38,buy:28,cat:'消费制造',roe:22,divHist:['0.96','1.04','1.20','1.22','1.38'],earn:'2026-08-28',divDt:'2027-05-25',cfo:110,fcf:50,cov:1.8,safe:'🟡中等'},
+{name:'贵州茅台',code:'600519',mkt:1,div:30.00,buy:1200,cat:'消费制造',roe:30,divHist:['19.00','21.00','24.00','28.00','30.00'],earn:'2026-08-18',divDt:'2027-06-20',cfo:840,fcf:600,cov:3.5,safe:'🟢安全'},
+{name:'泸州老窖',code:'000568',mkt:0,div:5.00,buy:180,cat:'消费制造',roe:28,divHist:['3.50','4.00','4.50','4.80','5.00'],earn:'2026-10-28',divDt:'2027-06-15',cfo:120,fcf:80,cov:2.5,safe:'🟢安全'},
+{name:'海天味业',code:'603288',mkt:1,div:1.50,buy:50,cat:'消费制造',roe:20,divHist:['1.00','1.10','1.20','1.35','1.50'],earn:'2026-10-28',divDt:'2027-05-30',cfo:68,fcf:35,cov:2.0,safe:'🟢安全'},
 ];
 
 var DIV_CAL=[
@@ -176,9 +183,10 @@ async function fetchOne(mkt,code){
 async function load(){
   document.getElementById('time').textContent='⏳ 加载中...';
   document.getElementById('dash').innerHTML='<div style="text-align:center;padding:30px;color:var(--sub);font-size:13px">⏳ 正在获取行情...</div>';
-  try{for(var i=0;i<CFG.length;i++){if(typeof shares[CFG[i].code]==='undefined')shares[CFG[i].code]=0;}}catch(e){}
-  // 并发拉取所有股票数据（不再串行等待）
-  var promises=CFG.map(function(c){
+  // 仅加载已启用的股票
+  var cList=getEnabled();
+  try{for(var i=0;i<cList.length;i++){if(typeof shares[cList[i].code]==='undefined')shares[cList[i].code]=0;}}catch(e){}
+  var promises=cList.map(function(c){
     var row={name:c.name,code:c.code,cat:c.cat,div:c.div,buy:c.buy,roe:c.roe,divHist:c.divHist,earn:c.earn,divDt:c.divDt,cfo:c.cfo,fcf:c.fcf,cov:c.cov,safe:c.safe,price:0,prev:0,chg:0,pe:0,pb:0,mcap:0,divR:0,dist:0,needy:0,ok:false};
     return fetchOne(c.mkt,c.code).then(function(raw){
       if(raw&&raw.f43){
@@ -531,13 +539,16 @@ function renderAll(){
   // 设置页
   var sett='<div class="panel"><h2>⚙️ 个股显示设置</h2>'+
     '<div style="font-size:11px;color:var(--sub);margin-bottom:12px">勾选的股票将显示在首页、个股、监控和持仓页中</div>';
-  var cats={银行:[],保险:[],能源:[],消费:[]};
+  var cats={};var catOrder=['大金融','公用事业','能源资源','消费制造'];
+  for(var k=0;k<catOrder.length;k++)cats[catOrder[k]]=[];
   for(var i=0;i<CFG.length;i++){
     var c=CFG[i];
     if(!cats[c.cat])cats[c.cat]=[];
     cats[c.cat].push(c);
   }
-  for(var cn in cats){
+  for(var k=0;k<catOrder.length;k++){
+    var cn=catOrder[k];
+    if(!cats[cn]||cats[cn].length===0)continue;
     sett+='<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid var(--border)">'+cn+'</div>';
     for(var j=0;j<cats[cn].length;j++){
       var c=cats[cn][j],checked=enabledCodes[c.code]!==false?'checked':'';
@@ -549,7 +560,10 @@ function renderAll(){
     }
     sett+='</div>';
   }
-  sett+='<div style="text-align:center;padding:10px;font-size:10px;color:var(--sub)">修改后所有页面即时生效。</div></div>';
+  sett+='<div style="text-align:center;padding:10px">'+
+    '<button onclick="load();switchTab(document.querySelector(\'[data-tab=dash]\'),\'dash\')" style="padding:10px 40px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">✅ 确认刷新</button>'+
+    '</div>'+
+    '<div style="text-align:center;padding:4px;font-size:10px;color:var(--sub)">勾选/取消后记得点确认。下次打开自动记忆。</div></div>';
   document.getElementById('settings').innerHTML=sett;
 
   // 恢复状态
@@ -570,7 +584,7 @@ function stpShare(code,delta){var v=(shares[code]||0)+delta;if(v<0)v=0;shares[co
 function onHoldingChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.shares=parseInt(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
 function stpHolding(code,delta){var h=holdings[code]||{shares:0,cost:0};h.shares=(h.shares||0)+delta;if(h.shares<0)h.shares=0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
 function onCostChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.cost=parseFloat(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
-function toggleStock(code,checked){enabledCodes[code]=checked;try{localStorage.setItem('vc_enabled',JSON.stringify(enabledCodes))}catch(e){}renderAll();}
+function toggleStock(code,checked){enabledCodes[code]=checked;try{localStorage.setItem('vc_enabled',JSON.stringify(enabledCodes))}catch(e){}}
 function switchTab(btn,id){
   document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
   btn.classList.add('on');
