@@ -242,8 +242,6 @@ function buildDivTrend(hist){
 }
 
 function renderAll(){
-  // 数据没加载完时防抖，避免空白
-  if(!data||data.length===0){return;}
   var openIdx=[];
   document.querySelectorAll('.acc-head.open').forEach(function(el){
     var i=parseInt(el.parentNode.getAttribute('data-idx')||-1);
@@ -254,6 +252,9 @@ function renderAll(){
 
   // 首页
   var ann=Math.round(calcTotal(getAnn));
+  if(!data||data.length===0){
+    document.getElementById('dash').innerHTML='<div style="text-align:center;padding:30px;color:var(--sub);font-size:13px">⏳ 正在获取行情...</div>';
+  } else {
   var dash='<div style="font-size:12px;color:var(--text);font-weight:700;text-align:center;padding:4px 0 8px">📈 股息率价值投资 · 今日判断</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:3px;margin-bottom:10px">'+
       '<div style="background:#d4ebf7;color:#2980b9;padding:6px 2px;border-radius:4px;text-align:center;font-size:10px;font-weight:700"><div>≥6.0%</div><div style="font-size:9px;font-weight:400;margin-top:2px">极度低估</div></div>'+
@@ -283,6 +284,7 @@ function renderAll(){
   }
   dash+='</div>';
   document.getElementById('dash').innerHTML=dash;
+  }
 
   // 个股详情
   var detail='<div style="margin-bottom:12px;font-size:11px;color:var(--sub)">点击股票行展开查看详细数据</div>';
