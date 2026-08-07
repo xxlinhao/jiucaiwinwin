@@ -537,7 +537,35 @@ function renderAll(){
     '<div style="display:flex;justify-content:space-between"><div><span style="color:var(--sub);font-weight:400">年分红预估：</span><b style="color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</b></div><div style="text-align:right"><span style="color:var(--sub);font-weight:400">成本股息率：</span><b style="color:'+divClr+'">'+divCostRate.toFixed(2)+'%</b></div></div>'+
   '</div></div>';
   document.getElementById('opp').innerHTML=opps;
-  function renderSettings(){
+
+  // 恢复状态
+  openIdx.forEach(function(idx){
+    var el=document.querySelector('[data-idx="'+idx+'"] .acc-head');
+    if(el){el.classList.add('open');var body=el.nextElementSibling;if(body)body.classList.add('show');}
+  });
+  if(activeTabId){
+    document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
+    var at=document.querySelector('.tabs button[data-tab="'+activeTabId+'"]');if(at)at.classList.add('on');
+    ['dash','detail','monitor','opp','settings'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
+    var e=document.getElementById(activeTabId);if(e)e.classList.remove('hidden');
+  }
+}
+
+function onShareChange(code,val){shares[code]=parseInt(val)||0;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}renderAll();}
+function stpShare(code,delta){var v=(shares[code]||0)+delta;if(v<0)v=0;shares[code]=v;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}renderAll();}
+function onHoldingChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.shares=parseInt(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
+function stpHolding(code,delta){var h=holdings[code]||{shares:0,cost:0};h.shares=(h.shares||0)+delta;if(h.shares<0)h.shares=0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
+function onCostChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.cost=parseFloat(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
+function toggleStock(code,checked){enabledCodes[code]=checked;try{localStorage.setItem('vc_enabled',JSON.stringify(enabledCodes))}catch(e){}}
+function switchTab(btn,id){
+  document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
+  btn.classList.add('on');
+  ['dash','detail','monitor','opp','settings'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
+  var e=document.getElementById(id);if(e)e.classList.remove('hidden');
+}
+function toggleAcc(el){var body=el.nextElementSibling;body.classList.toggle('show');el.classList.toggle('open');}
+
+function renderSettings(){
   var sett='<div class="panel"><h2>⚙️ 个股显示设置</h2>'+
     '<div style="font-size:11px;color:var(--sub);margin-bottom:12px">勾选的股票将显示在首页、个股、监控和持仓页中</div>';
   var cats={};var catOrder=['大金融','公用事业','能源资源','消费制造'];
@@ -567,33 +595,6 @@ function renderAll(){
     '<div style="text-align:center;padding:4px;font-size:10px;color:var(--sub)">勾选/取消后记得点确认。下次打开自动记忆。</div></div>';
   document.getElementById('settings').innerHTML=sett;
 }
-
-  // 恢复状态
-  openIdx.forEach(function(idx){
-    var el=document.querySelector('[data-idx="'+idx+'"] .acc-head');
-    if(el){el.classList.add('open');var body=el.nextElementSibling;if(body)body.classList.add('show');}
-  });
-  if(activeTabId){
-    document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
-    var at=document.querySelector('.tabs button[data-tab="'+activeTabId+'"]');if(at)at.classList.add('on');
-    ['dash','detail','monitor','opp','settings'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
-    var e=document.getElementById(activeTabId);if(e)e.classList.remove('hidden');
-  }
-}
-
-function onShareChange(code,val){shares[code]=parseInt(val)||0;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}renderAll();}
-function stpShare(code,delta){var v=(shares[code]||0)+delta;if(v<0)v=0;shares[code]=v;try{localStorage.setItem('vc_shares',JSON.stringify(shares))}catch(e){}renderAll();}
-function onHoldingChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.shares=parseInt(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
-function stpHolding(code,delta){var h=holdings[code]||{shares:0,cost:0};h.shares=(h.shares||0)+delta;if(h.shares<0)h.shares=0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
-function onCostChange(code,val){var h=holdings[code]||{shares:0,cost:0};h.cost=parseFloat(val)||0;holdings[code]=h;try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}renderAll();}
-function toggleStock(code,checked){enabledCodes[code]=checked;try{localStorage.setItem('vc_enabled',JSON.stringify(enabledCodes))}catch(e){}}
-function switchTab(btn,id){
-  document.querySelectorAll('.tabs button').forEach(function(b){b.classList.remove('on')});
-  btn.classList.add('on');
-  ['dash','detail','monitor','opp','settings'].forEach(function(k){var e=document.getElementById(k);if(e)e.classList.add('hidden')});
-  var e=document.getElementById(id);if(e)e.classList.remove('hidden');
-}
-function toggleAcc(el){var body=el.nextElementSibling;body.classList.toggle('show');el.classList.toggle('open');}
 function openStockDetail(el){
   var code=el.getAttribute('data-code');
   var idx=-1;for(var i=0;i<data.length;i++)if(data[i].code===code){idx=i;break;}
