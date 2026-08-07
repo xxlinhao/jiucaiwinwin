@@ -64,10 +64,10 @@ header .st{font-size:11px;color:var(--sub);margin-top:2px}
 <button data-tab="opp" onclick="switchTab(this,'opp')">📊 持仓</button>
 <button data-tab="settings" onclick="switchTab(this,'settings')">⚙️ 设置</button>
 </div>
-<div id="settings"></div>
-<div id="dash" class="hidden"></div>
+<div id="dash"></div>
 <div id="detail" class="hidden"></div>
 <div id="opp" class="hidden"></div>
+<div id="settings" class="hidden"></div>
 <footer>东方财富API · 价值投资观察站</footer>
 
 <script>
@@ -112,7 +112,7 @@ for(var k=0;k<co.length;k++)cs[co[k]]=[];
 for(var i=0;i<CFG.length;i++)cs[CFG[i].cat].push(CFG[i]);
 var h='<div class="panel"><h2>⚙️ 个股显示设置</h2><div style="font-size:11px;color:var(--sub);margin-bottom:12px">勾选后点确认刷新行情，下次自动记忆。</div>';
 for(var k=0;k<co.length;k++){var cn=co[k];
-  h+='<div style="margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden"><div onclick="var b=this.nextElementSibling;var a=this.querySelector(\'.arr\');b.style.display=b.style.display==\'none\'?\'\':\'none\';a.textContent=a.textContent==\'▼\'?\'▶\':\'▼\'" style="background:#f8f9fa;padding:10px 12px;cursor:pointer;font-weight:700;font-size:13px;color:var(--blue);display:flex;justify-content:space-between">'+cn+' <span style="font-weight:400;font-size:10px;color:var(--sub)">'+cs[cn].length+'只</span><span class="arr">▼</span></div><div style="display:block">';
+  h+='<div style="margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden"><div onclick="var b=this.nextElementSibling;var a=this.querySelector(\'.arr\');b.style.display=b.style.display==\'none\'?\'\':\'none\';a.textContent=a.textContent==\'▼\'?\'▶\':\'▼\'" style="background:#f8f9fa;padding:10px 12px;cursor:pointer;font-weight:700;font-size:13px;color:var(--blue);display:flex;justify-content:space-between">'+cn+' <span style="font-weight:400;font-size:10px;color:var(--sub)">'+cs[cn].length+'只</span><span class="arr">▼</span></div><div style="display:none">';
   for(var j=0;j<cs[cn].length;j++){var c=cs[cn][j],ch=enabled[c.code]?'checked':'',st=ch?'':' style="opacity:0.5"';
     h+='<label'+st+' onclick="if(!this.querySelector(\'input\').checked)this.style.opacity=\'1\';else this.style.opacity=\'0.5\'" style="display:flex;align-items:center;padding:10px 12px;border-top:1px solid #f0f2f5;cursor:pointer"><input type="checkbox" '+ch+' onchange="tog(\''+c.code+'\',this.checked)" style="margin-right:10px;transform:scale(1.2)"><div style="flex:1"><div style="font-size:13px;font-weight:600">'+c.name+'</div><div style="font-size:10px;color:var(--sub);margin-top:2px">'+c.code+' · 每股分红 ¥'+c.div.toFixed(2)+'</div></div></label>';}
   h+='</div></div>';}
@@ -231,6 +231,9 @@ function stH(code,d){var h=holdings[code]||{shares:0,cost:0};h.shares=(h.shares|
 function cC(code,v){var h=holdings[code]||{shares:0,cost:0};h.cost=parseFloat(v)||0;holdings[code]=h;sH();renderAll()}
 function sH(){try{localStorage.setItem('vc_holdings',JSON.stringify(holdings))}catch(e){}}
 function switchTab(btn,id){sw(btn,id)}
+
+// 首次打开如有勾选自动加载
+if(active().length>0){load()}
 </script>
 </body>
 </html>
