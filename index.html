@@ -537,8 +537,7 @@ function renderAll(){
     '<div style="display:flex;justify-content:space-between"><div><span style="color:var(--sub);font-weight:400">年分红预估：</span><b style="color:var(--orange)">¥'+Math.round(totalDiv).toLocaleString()+'</b></div><div style="text-align:right"><span style="color:var(--sub);font-weight:400">成本股息率：</span><b style="color:'+divClr+'">'+divCostRate.toFixed(2)+'%</b></div></div>'+
   '</div></div>';
   document.getElementById('opp').innerHTML=opps;
-
-  // 设置页
+  function renderSettings(){
   var sett='<div class="panel"><h2>⚙️ 个股显示设置</h2>'+
     '<div style="font-size:11px;color:var(--sub);margin-bottom:12px">勾选的股票将显示在首页、个股、监控和持仓页中</div>';
   var cats={};var catOrder=['大金融','公用事业','能源资源','消费制造'];
@@ -567,6 +566,7 @@ function renderAll(){
     '</div>'+
     '<div style="text-align:center;padding:4px;font-size:10px;color:var(--sub)">勾选/取消后记得点确认。下次打开自动记忆。</div></div>';
   document.getElementById('settings').innerHTML=sett;
+}
 
   // 恢复状态
   openIdx.forEach(function(idx){
@@ -620,6 +620,7 @@ window.addEventListener('unhandledrejection',function(e){
   console.error('reject',e.reason);
 });
 
+renderSettings();
 load();
 </script>
 </body>
